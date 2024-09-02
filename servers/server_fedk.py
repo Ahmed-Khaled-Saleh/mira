@@ -153,36 +153,6 @@ class Server_fedk(object):
         for client in selected_client_list:
             client.clear_model()
 
-  
-    def prepare_aggregate(self):
-        self.model_for_aggregate = deepcopy(self.model)
-        for _, v in self.model_for_aggregate.named_parameters():
-            if v.requires_grad:
-                v.data.zero_()
-
-    def online_aggregate(self, client, selected_client_list):
-        if self.args.equal_weight:
-            weight_array = np.array([1.0 for _ in selected_client_list], dtype=np.float64)
-            weight_array /= float(len(selected_client_list))
-        else:
-            weight_array = np.array([len(client.train_loader) for client in selected_client_list], dtype=np.float64)
-            weight_array /= float(np.sum(weight_array))
-        
-        cur_client_index = 0
-        for c in selected_client_list:
-            if client.idx == c.idx:
-                break
-            cur_client_index += 1
-        
-        cur_weight = weight_array[cur_client_index]
-        for k, v in self.model_for_aggregate.named_parameters():
-            if v.requires_grad:
-                v.data += client.model.state_dict()[k].data * cur_weight
-        client.clear_model()
-
-    def finish_aggregate(self):
-        self.model = self.model_for_aggregate
-
     def calculate_probabilities(self):
         history_list = [self.gradient_history[seed] for seed in self.candidate_seeds]
         mean_grad_history = np.array([np.mean(np.abs(np.clip(history_cur_seed, -self.args.bias_loss_clip, self.args.bias_loss_clip))) for history_cur_seed in history_list])
