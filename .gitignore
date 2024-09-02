@@ -1,0 +1,26 @@
+__pycache__
+*./__pycache__
+*/ckpt
+*/logs
+*.pth
+.idea
+*.jpg
+*.png
+*.vscode
+*.pkl
+*.pickle
+*.bin
+*.json
+*.jsonl   
+*.ipynb_checkpoints
+# remoe folder notebok
+batch_*.py
+*.idea
+*.DS_Store
+exp/
+logs/
+/notebooks/*
+/data/natural-instructions-2.8/*
+*.pdf
+*.csv
+*.zip
