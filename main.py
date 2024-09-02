@@ -54,7 +54,7 @@ def process_main(args_config_fname):
     print("Generating the datasets...")
     loss_ds, gener_ds = get_datasets(args)
     list_train_ds, list_eval_ds, tokenizer, datacollator = loss_ds
-    list_train_ds_genr, list_eval_ds_genr, _, _ = gener_ds
+    list_train_ds_genr, list_eval_ds_genr = gener_ds
     print("Datasets generated successfully.")
 
     if args.dataset == 'instruct':
@@ -87,7 +87,7 @@ def process_main(args_config_fname):
               "list_eval_ds_genr": list_eval_ds_genr, 
               "datacollator": datacollator}
     
-    server = get_server(args, candidate_seeds, log_dir, **kwargs)
+    server = get_server(args, tokenizer, candidate_seeds, log_dir, **kwargs)
     print("server initialized")    
 
     if args.log:

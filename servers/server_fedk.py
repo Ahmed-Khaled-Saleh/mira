@@ -6,21 +6,17 @@ from copy import deepcopy
 
 from tqdm import tqdm
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model
+from transformers import AutoModelForCausalLM
 import wandb
-from data.utils_data.default_tokens import DefaultToken
-from optimizers.mezo_optimizer import *  # noqa: F403
 from utils.validation import *  # noqa: F403
 from utils.helper_fuctions import *  # noqa: F403
 from trainers.trainer import Trainer
 from trainers.callbacks import empty_cach, log_memory
-from clients.client_fedk import Client_fedk
 from optimizers.mezo_torch import MeZOOptimizer
+from servers.base_server import BaseServer
 
 
-
-class Server_fedk(object):
+class Server_fedk(BaseServer):
     def __init__(self, args, tokenizer, candidate_seeds, log_dir, **kwargs):
         self.args = args
         self.candidate_seeds = candidate_seeds
