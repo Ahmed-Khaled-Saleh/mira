@@ -18,24 +18,14 @@ from trainers.callbacks import empty_cach, log_memory
 from clients.client_fedk import Client_fedk
 from optimizers.mezo_torch import MeZOOptimizer
 
-class Server(object):
-    def __init__(self, args, candidate_seeds, log_dir, **kwargs):
+
+
+class Server_fedk(object):
+    def __init__(self, args, tokenizer, candidate_seeds, log_dir, **kwargs):
         self.args = args
         self.candidate_seeds = candidate_seeds
-        self.tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+        self.tokenizer = tokenizer
         self.log_dir = log_dir
-        self.tokenizer.model_max_length = self.args.max_length
-        special_tokens = dict()
- 
-        if self.tokenizer.pad_token is None:
-            special_tokens["pad_token"] = DefaultToken.PAD_TOKEN.value
-        if self.tokenizer.eos_token is None:
-            special_tokens["eos_token"] = DefaultToken.EOS_TOKEN.value
-        if self.tokenizer.bos_token is None:
-            special_tokens["bos_token"] = DefaultToken.BOS_TOKEN.value
-        if self.tokenizer.unk_token is None:
-            special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
-        self.tokenizer.add_special_tokens(special_tokens)
         
         self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', torch_dtype=torch.float16, trust_remote_code=True)
 
@@ -64,26 +54,9 @@ class Server(object):
               run,
               memory_record_dic):
 
-        lst_global_metrics_dfs = []
+        lst_global_metrics_dfs = []        
 
-        client_list = []
-        for idx in range(args.num_clients):
-            client_list.append(Client_fedk(self.list_train_ds[idx],
-                                           self.list_eval_ds[idx],
-                                           None,
-                                           self.criterion,
-                                           None,
-                                           self.list_train_ds_genr[idx],
-                                           self.list_eval_ds_genr[idx],
-                                           self.tokenizer,
-                                           self.datacollator, 
-                                           idx, 
-                                           self.args,
-                                           candidate_seeds= self.candidate_seeds)
-                                           )
-
-        
-        self.client_list = client_list
+        self.get_clients(args)
         print("Finished initializing the clients")
         
         for t in range(1, args.rounds + 1):
@@ -125,7 +98,7 @@ class Server(object):
                 
                 print("Client ", client.idx, " finished training")
                 print("****************************************")
-                print(f"Round Sats for client {client_list.idx}: {metrics}")
+                print(f"Round Sats for client {self.client.idx}: {metrics}")
 
                 lst_global_metrics.append(metrics)
             
@@ -180,20 +153,7 @@ class Server(object):
         for client in selected_client_list:
             client.clear_model()
 
-    # def update_global_model_by_seed_pool(self):
-    #     self.model = deepcopy(self.model_w0)
-    #     self.model.to(self.device)
-        
-    #     framework = MeZOFramework(self.model, args=self.args, lr=float(self.args.lr), candidate_seeds=self.candidate_seeds)  # noqa: F405
-    #     progress_bar = tqdm(range(len(self.seed_pool))) 
-
-    #     # pull the latest model via accumulated {seed, grad} pairs on the server
-    #     for seed, grad in self.seed_pool.items():
-    #         if grad != 0.0:
-    #             framework.zo_update(seed=seed, grad=grad)
-    #         progress_bar.update(1)
-    #         progress_bar.set_description('server update global model')
-
+  
     def prepare_aggregate(self):
         self.model_for_aggregate = deepcopy(self.model)
         for _, v in self.model_for_aggregate.named_parameters():
@@ -256,85 +216,4 @@ class Server(object):
         return clients_metrics
     
     
-    def eval(self, cur_round, eval_avg_acc):
-        if self.args.eval_metric == 'loss':
-            eval_metric = self.eval_loss(cur_round)
-        else:
-            eval_metric =  self.eval_generate(cur_round)
-            
-        if self.args.save and cur_round > 0:
-            save_dir = self.log_dir
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            if (self.args.eval_metric == 'loss' and eval_metric < np.min(eval_avg_acc)) or (self.args.eval_metric != 'none' and eval_metric > np.max(eval_avg_acc)):
-                for file_name in os.listdir(save_dir):
-                    if 'best' in file_name:
-                        os.remove(os.path.join(save_dir, file_name))  
-                torch.save(self.model.state_dict(), os.path.join(save_dir, f'model_state_dict_best_round{cur_round}.bin'))
-            for file_name in os.listdir(save_dir):
-                if 'final' in file_name:
-                    os.remove(os.path.join(save_dir, file_name)) 
-            torch.save(self.model.state_dict(), os.path.join(save_dir, f'model_state_dict_final_round{cur_round}.bin'))
-        return eval_metric
-
     
-    def eval_loss(self, cur_round):
-        self.model = self.model.to(self.device)
-        self.model.eval()
-        
-        progress_bar_eval = tqdm(range(len(self.eval_loader)))
-        loss_total_eval = 0.0
-        num_eval = 0
-        
-        loss_per_task = {}
-        with torch.no_grad():
-            for batch in self.eval_loader:
-                task = batch['task'][0]
-                batch = {
-                    'input_ids': batch['input_ids'].to(self.device),
-                    'labels': batch['labels'].to(self.device),
-                    'attention_mask': batch['attention_mask'].to(self.device)
-                }
-                outputs = self.model(**batch)
-                loss = outputs.loss
-                loss_per_task[task] = loss if task not in loss_per_task else loss_per_task[task] + loss
-                progress_bar_eval.update(1)
-                if torch.isnan(loss):
-                    continue
-                loss_total_eval += loss
-                num_eval += len(batch['input_ids'])
-                if num_eval == 0:
-                    num_eval = 1e-10
-                progress_bar_eval.set_description(f'eval at round {cur_round}, loss: {loss_total_eval / num_eval}')
-        print()
-        print()
-        self.model = self.model.cpu()
-        return (loss_total_eval / num_eval).item(), loss_per_task
-
-    def eval_generate(self, cur_round):
-        self.model = self.model.to(self.device)
-        self.model.eval()
-        
-        progress_bar_eval = tqdm(range(len(self.eval_loader)))
-        acc_total_eval = 0.0
-        num_eval = 0
-        
-        with torch.no_grad():
-            for batch in self.eval_loader:
-                input_ids = batch['input_ids'].to(self.device)
-                label_ids = batch['labels'].to(self.device)
-                output_ids = self.model.generate(
-                    input_ids=input_ids,
-                    max_new_tokens=128,
-                    num_beams=1,
-                )
-                acc_total_eval += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.tokenizer)  # noqa: F405
-                progress_bar_eval.update(1)
-                num_eval += len(batch['input_ids'])
-                if num_eval == 0:
-                    num_eval = 1e-10
-                progress_bar_eval.set_description(f'eval at round {cur_round}, metric: {acc_total_eval / num_eval}')
-        print()
-        print()
-        self.model = self.model.cpu()
-        return acc_total_eval / num_eval

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import pandas as pd
 from copy import deepcopy
-from data.utils_data.default_tokens import DefaultToken
+from utils.utils_data.default_tokens import DefaultToken
 
 
 def dict_to_df(dictionary):

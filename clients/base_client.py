@@ -26,7 +26,7 @@ class BaseClient:
         self.optimizer = optimizer
 
 
-    def loss(self, criterion, out, label):
+    def loss(self, out, label):
         return self.criterion(out, label)
 
 
