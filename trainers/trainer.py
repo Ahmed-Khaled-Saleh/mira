@@ -51,8 +51,7 @@ class Trainer:
 
                 loss = self._run_batch(batch)
                 if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    continue
-                total_loss += loss
+                    total_loss += loss
                 
                 if i % 1000 == 999:
                     last_loss = total_loss / 1000 
@@ -137,6 +136,8 @@ class Trainer:
     
     def eval(self):
         total_loss = 0
+        print("****************************************")
+        print('Inside the eval () function of client ', self.client.idx)
 
         def _run_batch(batch):
             out = self.client.model(**batch)
@@ -153,14 +154,20 @@ class Trainer:
                 }
                 
                 loss = _run_batch(batch)
+                print(f"Client {self.client.idx}'s Batch loss inside eval() : {loss}")
 
                 if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    continue
-                total_loss += loss              
-
+                    total_loss += loss              
+                
+            print(f'Client {self.client.idx} Eval loss is : {total_loss / len(self.client.eval_loader)}')
+            print("****************************************")
+                
         return total_loss / len(self.client.eval_loader)
     
     def train_generate(self):
+        print("****************************************")
+        print('Inside the train_generate () function of client ', self.client.idx)
+
         self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
@@ -177,16 +184,22 @@ class Trainer:
                 num_beams=1,
             )
             acc_total_train += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)
+            
+            print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / len(batch['input_ids'])}")
             progress_bar_train.update(1)
+
             num_train += len(batch['input_ids'])
             if num_train == 0:
                 num_train = 1e-10
-        print()
-        print()
-        # self.client.model = self.client.model.cpu()
+            
+        print(f'Client {self.client.idx} accuracy is : {acc_total_train / num_train}')
+        print("****************************************")
         return acc_total_train / num_train
     
     def eval_generate(self):
+        print("****************************************")
+        print('Inside the eval_generate () function of client ', self.client.idx)
+
         self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
@@ -203,13 +216,16 @@ class Trainer:
                     max_new_tokens=128,
                     num_beams=1,
                 )
+                
                 acc_total_eval += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)  # noqa: F405
+                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / len(batch['input_ids'])}")
                 progress_bar_eval.update(1)
                 num_eval += len(batch['input_ids'])
                 if num_eval == 0:
                     num_eval = 1e-10
-        print()
-        print()
+
+        print(f'Client {self.client.idx} accuracy is : {acc_total_eval / num_eval}')
+        print("****************************************")
         return acc_total_eval / num_eval
     
     def prepare_dataloader(self, dataset, batch_size: int, data_collator):
