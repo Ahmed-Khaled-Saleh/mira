@@ -13,7 +13,7 @@
 module --force purge
 module load pytorch
 source /projappl/project_2009050/torch/bin/activate
-cd /projappl/project_2009050/code/FedKseed
+cd /projappl/project_2009050/code/mira
 
 export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/torch/lib/python3.9/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
