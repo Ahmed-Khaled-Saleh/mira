@@ -1,5 +1,4 @@
-from optimizers.mezo_optimizer import *  # noqa: F403
-from optimizers.mezo_bias_optimizer import *  # noqa: F403
+
 from tqdm import tqdm
 import os
 import torch
