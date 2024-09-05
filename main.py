@@ -8,10 +8,10 @@ import pandas as pd
 import wandb
 from dotenv import load_dotenv
 from copy import deepcopy
-from data.utils_data.load_data import get_datasets
+from utils.utils_data.load_data import get_datasets
 from trainers.trainer import Trainer
 from optimizers.mezo_torch import MeZOOptimizer
-from clients.model import GPT2
+from models.model import GPT2
 from trainers.callbacks import empty_cach, log_memory
 from utils.helper_fuctions import (setup_seed,  
                                    load_config,
