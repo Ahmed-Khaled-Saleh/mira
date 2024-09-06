@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from clients.client_fedk import Client_fedk
 from utils.validation import rouge_score
-
+from utils.helper_fuctions import get_class
 class BaseServer():
 
     def __init__(self) -> None:
@@ -14,9 +14,11 @@ class BaseServer():
 
     
     def get_clients(self, args):
+
+        Server = get_class('clients.client' + args.name, 'Client_' + args.name)
         client_list = []
         for idx in range(args.num_clients):
-            client_list.append(Client_fedk(self.list_train_ds[idx],
+            client_list.append(Server(self.list_train_ds[idx],
                                            self.list_eval_ds[idx],
                                            None,
                                            self.criterion,

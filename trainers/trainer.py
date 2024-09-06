@@ -64,11 +64,11 @@ class Trainer:
     def _run_epoch_fed(self, local_iters):
         total_loss = 0
         progress_bar = tqdm(range(local_iters))
-
+        num_trained = 0
         with torch.inference_mode():
             for r in range(local_iters):
                 print("local iteration: ", r)
-                num_trained = 0
+                
                 try:
                     batch = next(self.client.train_iterator)
                 except StopIteration:
@@ -82,6 +82,7 @@ class Trainer:
                 }
                 
                 loss = self._run_batch(batch)
+                num_trained += len(batch['input_ids'])
                 print(f'Batch loss is {loss}')
                 progress_bar.update(1)
                 progress_bar.set_description(f'client {self.client.idx} train at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
@@ -90,8 +91,8 @@ class Trainer:
                     total_loss += loss
                     num_trained += len(batch['input_ids'])
 
-            if num_trained == 0:
-                num_trained = 1e-10
+            # if num_trained == 0:
+            #     num_trained = 1e-10
 
         avg_round_loss = total_loss / num_trained
                 
@@ -216,7 +217,7 @@ class Trainer:
                     max_new_tokens=128,
                     num_beams=1,
                 )
-                
+
                 acc_total_eval += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)  # noqa: F405
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / len(batch['input_ids'])}")
                 progress_bar_eval.update(1)
