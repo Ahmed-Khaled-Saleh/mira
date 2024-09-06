@@ -94,7 +94,7 @@ class Server_fedk(BaseServer):
                 
                 print("Client ", client.idx, " finished training")
                 print("****************************************")
-                print(f"Round Sats for client {self.client.idx}: {metrics}")
+                print(f"Round Sats for client {client.idx}: {metrics}")
 
                 lst_global_metrics.append(metrics)
             
