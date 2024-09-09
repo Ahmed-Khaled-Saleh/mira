@@ -14,7 +14,7 @@ from peft import (
 from peft import (
     LoraConfig,
     get_peft_model,
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
 )
 from torch.nn.functional import normalize
 import wandb
@@ -85,7 +85,7 @@ class Server_fedit(BaseServer):
                 
                 client.initiate_local_training()
 
-                self.model = prepare_model_for_int8_training(model)
+                self.model = prepare_model_for_kbit_training(model)
                 config = LoraConfig(
                     r=self.args.r,
                     lora_alpha=16,
