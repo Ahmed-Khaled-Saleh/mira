@@ -15,7 +15,7 @@ class BaseServer():
     
     def get_clients(self, args):
 
-        Server = get_class('clients.client' + args.name, 'Client_' + args.name)
+        Server = get_class('clients.client_' + args.name, 'Client_' + args.name)
         client_list = []
         for idx in range(args.num_clients):
             client_list.append(Server(self.list_train_ds[idx],

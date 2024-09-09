@@ -3,6 +3,11 @@ from tqdm import tqdm
 import os
 import torch
 from copy import deepcopy
+from collections import OrderedDict
+from peft import (
+    get_peft_model_state_dict,
+    set_peft_model_state_dict,
+)
 from utils.validation import *  # noqa: F403
 from optimizers.mezo_torch import MeZOOptimizer
 from trainers.trainer import Trainer
@@ -52,6 +57,40 @@ class Client_fedit(BaseClient):
         self.train_stat = {}
         self.test_stats = {}
         
+
+
+    
+    def initiate_local_training(self):
+        self.model.config.use_cache = False
+        self.params_dict_old = deepcopy(
+            OrderedDict((name, param.detach()) for name, param in self.model.named_parameters() if
+                        "default" in name))
+        self.params_dict_new = OrderedDict((name, param.detach()) for name, param in self.model.named_parameters() if
+                                           "default" in name)
+        self.model.state_dict = (
+            lambda instance, *_, **__: get_peft_model_state_dict(
+                instance, self.params_dict_new, "default"
+            )
+        ).__get__(self.model, type(self.model))
+
+
+
+
+    def terminate_local_training(self, epoch, local_dataset_len_dict, previously_selected_clients_set):
+
+        local_dataset_len_dict[self.client_id] = len(self.local_train_dataset)
+        new_adapter_weight = self.model.state_dict()
+        single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(self.client_id))
+        os.makedirs(single_output_dir, exist_ok=True)
+        torch.save(new_adapter_weight, single_output_dir + "/pytorch_model.bin")
+
+        older_adapter_weight = get_peft_model_state_dict(self.model, self.params_dict_old, "default")
+        set_peft_model_state_dict(self.model, older_adapter_weight, "default")
+        previously_selected_clients_set = previously_selected_clients_set | set({self.client_id})
+        last_client_id = self.client_id
+
+        return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
+
     def clear_model(self):
         self.model = None
 
