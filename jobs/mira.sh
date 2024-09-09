@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=fedkseed
+#SBATCH --job-name=mira
 #SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=40
 #SBATCH --mem=320G
 #SBATCH --time=24:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/fedkseed.out
-#SBATCH --error=logs/fedkseed.err
+#SBATCH --output=logs/mira.out
+#SBATCH --error=logs/mira.err
 
 module --force purge
 module load pytorch
