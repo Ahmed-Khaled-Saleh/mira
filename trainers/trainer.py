@@ -23,15 +23,22 @@ class Trainer:
         self.client.eval_loader_genr = self.prepare_dataloader(self.client.eval_ds_genr, self.client.args.batch_size, self.client.data_collator)
         self.client.train_iterator = iter(self.client.train_loader)
         
+        
     def _run_batch(self, batch):
         self.client.optimizer.zero_grad()
         def closure():
             out = self.client.model(**batch)
             return self.client.criterion(out)
 
-        loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
-        self.client._add_seed_pole(zo_random_seed, projected_grad)
-
+        if self.client.args.name in ['fedk', 'mira']:
+            loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
+            self.client._add_seed_pole(zo_random_seed, projected_grad)
+            
+        else:
+            loss = closure()
+            loss.backward()
+            self.client.optimizer.step()
+        
         if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
             return loss
         return 0

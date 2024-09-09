@@ -57,7 +57,8 @@ class Server_fedit(BaseServer):
               client_indices_rounds,
               args,
               run,
-              memory_record_dic):
+              memory_record_dic,
+              output_dir= "./lora-shepherd/"):
 
 
         self.get_clients(args)
@@ -81,15 +82,10 @@ class Server_fedit(BaseServer):
             print("Starting round ", t)
             print("****************************************")
             for client in selected_client:
-                client.model = deepcopy(self.model)
-                
-                client.optimizer = deepcopy(AdamW(client.model.parameters(),
-                                            lr= float(self.args.lr),
-                                            weight_decay= self.args.weight_decay))
                 
                 client.initiate_local_training()
 
-                model = prepare_model_for_int8_training(model)
+                self.model = prepare_model_for_int8_training(model)
                 config = LoraConfig(
                     r=self.args.r,
                     lora_alpha=16,
@@ -99,7 +95,12 @@ class Server_fedit(BaseServer):
                     task_type="CAUSAL_LM",
                 )
 
-                model = get_peft_model(model, config)
+                self.model = get_peft_model(self.model, config)
+
+                client.model = deepcopy(self.model)
+                client.optimizer = deepcopy(AdamW(client.model.parameters(),
+                                            lr= float(self.args.lr),
+                                            weight_decay= self.args.weight_decay))
 
                 trainer = Trainer(client)
             
@@ -111,7 +112,7 @@ class Server_fedit(BaseServer):
                                                                          epochs= epochs,
                                                                          local_iters= local_iters,
                                                                          memory_record_dic= memory_record_dic,
-                                                                         callbacks=[empty_cach, log_memory])
+                                                                         callbacks=None)
                 
                 train_loss = np.array(train_loss).mean()
                 task = client.task if isinstance(client.task, str) else client.task[0]
@@ -132,6 +133,19 @@ class Server_fedit(BaseServer):
                 lst_global_metrics.append(metrics)
 
                 del client
+
+        
+            print("Collecting the weights of clients and performing aggregation")
+            self.model = self.aggregate(
+                                        model,
+                                        selected_client,
+                                        output_dir,
+                                        local_dataset_len_dict,
+                                        t,
+                                        )
+            
+            torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
+            config.save_pretrained(output_dir)
 
             for metric in lst_global_metrics:
                 run.log({"Train loss": metric['train_loss']})
