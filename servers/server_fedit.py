@@ -102,6 +102,7 @@ class Server_fedit(BaseServer):
                 client.optimizer = deepcopy(AdamW(client.model.parameters(),
                                             lr= float(self.args.lr),
                                             weight_decay= self.args.weight_decay))
+                
                 client.initiate_local_training()
                 trainer = Trainer(client)
             

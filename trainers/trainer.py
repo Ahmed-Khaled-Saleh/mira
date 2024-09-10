@@ -114,7 +114,7 @@ class Trainer:
               callbacks= []):
         
         print('Inside the train () function of client ', self.client.idx)
-        self.client.model.to(self.client.device)
+        self.client.model = self.client.model.to(self.client.device)
 
         if callbacks:
             callbacks[0](memory_record_dic)
@@ -147,6 +147,9 @@ class Trainer:
         print("****************************************")
         print('Inside the eval () function of client ', self.client.idx)
 
+        self.client.model = self.client.model.to(self.client.device)
+        self.client.model.eval()
+        
         def _run_batch(batch):
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
