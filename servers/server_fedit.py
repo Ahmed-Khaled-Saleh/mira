@@ -83,7 +83,7 @@ class Server_fedit(BaseServer):
             print("****************************************")
             for client in selected_client:
                 
-                client.initiate_local_training()
+                
 
                 self.model = prepare_model_for_kbit_training(self.model)
                 
@@ -102,7 +102,7 @@ class Server_fedit(BaseServer):
                 client.optimizer = deepcopy(AdamW(client.model.parameters(),
                                             lr= float(self.args.lr),
                                             weight_decay= self.args.weight_decay))
-
+                client.initiate_local_training()
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
