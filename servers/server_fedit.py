@@ -85,7 +85,8 @@ class Server_fedit(BaseServer):
                 
                 client.initiate_local_training()
 
-                self.model = prepare_model_for_kbit_training(model)
+                self.model = prepare_model_for_kbit_training(self.model)
+                
                 config = LoraConfig(
                     r=self.args.r,
                     lora_alpha=16,
