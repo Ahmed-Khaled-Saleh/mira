@@ -63,7 +63,7 @@ class Client_fedit(BaseClient):
 
     
     def initiate_local_training(self):
-        self.model.config.use_cache = False
+        # self.model.config.use_cache = False
         self.params_dict_old = deepcopy(
             OrderedDict((name, param.detach()) for name, param in self.model.named_parameters() if
                         "default" in name))
