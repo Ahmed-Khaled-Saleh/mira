@@ -84,7 +84,7 @@ class Server_fedit(BaseServer):
             for client in selected_client:
                 
                 
-
+                self.model = self.model.to(self.device)
                 self.model = prepare_model_for_kbit_training(self.model)
                 
                 config = LoraConfig(
@@ -122,7 +122,7 @@ class Server_fedit(BaseServer):
                 metrics['train_loss'], metrics['val_loss'], metrics['task'], metrics['train_acc'], metrics['val_acc'] = \
                     train_loss, val_loss, task, train_acc, val_acc
                 
-                model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
+                self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
                     client.terminate_local_training(t, 
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
@@ -139,7 +139,7 @@ class Server_fedit(BaseServer):
         
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
-                                        model,
+                                        self.model,
                                         selected_client,
                                         output_dir,
                                         local_dataset_len_dict,
