@@ -33,9 +33,25 @@ class Server_fedit(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         
-        self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', load_in_8bit=True, torch_dtype=torch.float16, trust_remote_code=True)
+        self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
+                                                          load_in_8bit=True,
+                                                          torch_dtype=torch.float16,
+                                                          trust_remote_code=True)
 
         self.model_w0 = deepcopy(self.model)
+        # self.model = self.model.to(self.device)
+        self.model = prepare_model_for_kbit_training(self.model)
+        config = LoraConfig(
+                    r=self.args.r,
+                    lora_alpha=16,
+                    target_modules=["q_proj",],
+                    lora_dropout=0.05,
+                    bias="none",
+                    task_type="CAUSAL_LM",
+                )
+
+        self.model = get_peft_model(self.model, config)
+        
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
@@ -84,26 +100,15 @@ class Server_fedit(BaseServer):
             for client in selected_client:
                 
                 
-                self.model = self.model.to(self.device)
-                self.model = prepare_model_for_kbit_training(self.model)
                 
-                config = LoraConfig(
-                    r=self.args.r,
-                    lora_alpha=16,
-                    target_modules=["q_proj",],
-                    lora_dropout=0.05,
-                    bias="none",
-                    task_type="CAUSAL_LM",
-                )
-
-                self.model = get_peft_model(self.model, config)
 
                 client.model = deepcopy(self.model)
+                
+                client.initiate_local_training()
                 client.optimizer = deepcopy(AdamW(client.model.parameters(),
                                             lr= float(self.args.lr),
                                             weight_decay= self.args.weight_decay))
                 
-                client.initiate_local_training()
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step

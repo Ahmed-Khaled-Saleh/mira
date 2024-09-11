@@ -69,10 +69,15 @@ class Trainer:
     
 
     def _run_epoch_fed(self, local_iters):
-        total_loss = 0
-        progress_bar = tqdm(range(local_iters))
-        num_trained = 0
-        with torch.inference_mode():
+        
+        
+
+        def local_train():
+            total_loss = 0
+            progress_bar = tqdm(range(local_iters))
+            num_trained = 0
+            
+            
             for r in range(local_iters):
                 print("local iteration: ", r)
                 
@@ -90,6 +95,10 @@ class Trainer:
                 
                 loss = self._run_batch(batch)
                 num_trained += len(batch['input_ids'])
+
+                if num_trained == 0:
+                    num_trained = 1e-10
+
                 print(f'Batch loss is {loss}')
                 progress_bar.update(1)
                 progress_bar.set_description(f'client {self.client.idx} train at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
@@ -98,10 +107,17 @@ class Trainer:
                     total_loss += loss
                     num_trained += len(batch['input_ids'])
 
-            # if num_trained == 0:
-            #     num_trained = 1e-10
+            return total_loss / num_trained
+        
 
-        avg_round_loss = total_loss / num_trained
+        if self.client.args.name in ['fedk', 'mira']:
+            self.client.model = self.client.model.to(self.client.device)
+            self.client.model.eval()
+            with torch.inference_mode():
+                avg_round_loss = local_train()
+        else:
+            avg_round_loss = local_train()
+                    
                 
         return avg_round_loss
 
@@ -114,12 +130,9 @@ class Trainer:
               callbacks= []):
         
         print('Inside the train () function of client ', self.client.idx)
-        self.client.model = self.client.model.to(self.client.device)
-
+        
         if callbacks:
             callbacks[0](memory_record_dic)
-        
-        self.client.model.eval()
 
         val_loss = self.eval()
         train_acc = self.train_generate()
