@@ -99,9 +99,6 @@ class Server_fedit(BaseServer):
             print("****************************************")
             for client in selected_client:
                 
-                
-                
-
                 client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
