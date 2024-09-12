@@ -36,7 +36,8 @@ class Server_fedit(BaseServer):
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           load_in_8bit=True,
                                                           torch_dtype=torch.float16,
-                                                          trust_remote_code=True)
+                                                          trust_remote_code=True,
+                                                          device_map={'':0})
 
         self.model_w0 = deepcopy(self.model)
         # self.model = self.model.to(self.device)
