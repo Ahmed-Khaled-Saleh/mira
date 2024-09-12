@@ -160,7 +160,8 @@ class Trainer:
         print("****************************************")
         print('Inside the eval () function of client ', self.client.idx)
 
-        self.client.model = self.client.model.to(self.client.device)
+        if self.client.args.name in ['fedk', 'mira']:
+            self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         def _run_batch(batch):
@@ -192,29 +193,30 @@ class Trainer:
         print("****************************************")
         print('Inside the train_generate () function of client ', self.client.idx)
 
-        self.client.model = self.client.model.to(self.client.device)
+        if self.client.args.name in ['fedk', 'mira']:
+            self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_train = tqdm(range(len(self.client.train_loader_genr)))
         acc_total_train = 0.0
         num_train = 0
-        
-        for batch in self.client.train_loader_genr:
-            input_ids = batch['input_ids'].to(self.client.device)
-            label_ids = batch['labels'].to(self.client.device)
-            output_ids = self.client.model.generate(
-                input_ids=input_ids,
-                max_new_tokens=128,
-                num_beams=1,
-            )
-            acc_total_train += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)
-            
-            print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / len(batch['input_ids'])}")
-            progress_bar_train.update(1)
+        with torch.no_grad():
+            for batch in self.client.train_loader_genr:
+                input_ids = batch['input_ids'].to(self.client.device)
+                label_ids = batch['labels'].to(self.client.device)
+                output_ids = self.client.model.generate(
+                    input_ids=input_ids,
+                    max_new_tokens=128,
+                    num_beams=1,
+                )
+                acc_total_train += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)
+                
+                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / len(batch['input_ids'])}")
+                progress_bar_train.update(1)
 
-            num_train += len(batch['input_ids'])
-            if num_train == 0:
-                num_train = 1e-10
+                num_train += len(batch['input_ids'])
+                if num_train == 0:
+                    num_train = 1e-10
             
         print(f'Client {self.client.idx} accuracy is : {acc_total_train / num_train}')
         print("****************************************")
@@ -224,7 +226,8 @@ class Trainer:
         print("****************************************")
         print('Inside the eval_generate () function of client ', self.client.idx)
 
-        self.client.model = self.client.model.to(self.client.device)
+        if self.client.args.name in ['fedk', 'mira']:
+            self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_eval = tqdm(range(len(self.client.eval_loader_genr)))
