@@ -3,7 +3,7 @@
   num_clients_per_task: 25
   m: 0.05
   rounds: 40
-  local_step: 5
+  local_step: 200
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'instruct'
@@ -29,4 +29,4 @@
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'FEDMIRA'
+  project: 'MIRA'
