@@ -101,7 +101,7 @@ class Trainer:
 
                 print(f'Batch loss is {loss}')
                 progress_bar.update(1)
-                progress_bar.set_description(f'client {self.client.idx} train at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
+                progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
 
                 if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
                     total_loss += loss

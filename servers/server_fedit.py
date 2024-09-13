@@ -46,16 +46,7 @@ class Server_fedit(BaseServer):
         self.model_w0 = deepcopy(self.model)
         # self.model = self.model.to(self.device)
         self.model = prepare_model_for_kbit_training(self.model)
-        config = LoraConfig(
-                    r=self.args.r,
-                    lora_alpha=16,
-                    target_modules=["q_proj",],
-                    lora_dropout=0.05,
-                    bias="none",
-                    task_type="CAUSAL_LM",
-                )
-
-        self.model = get_peft_model(self.model, config)
+        
         
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
@@ -102,9 +93,20 @@ class Server_fedit(BaseServer):
             lst_global_metrics = []
             print("Starting round ", t)
             print("****************************************")
+            round_loss = 0.0
             for client in selected_client:
                 
-                client.model = deepcopy(self.model)
+                config = LoraConfig(
+                    r=self.args.r,
+                    lora_alpha=16,
+                    target_modules=["q_proj",],
+                    lora_dropout=0.05,
+                    bias="none",
+                    task_type="CAUSAL_LM",
+                )
+
+                client.model = deepcopy(get_peft_model(self.model, config))
+                # client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
                 client.optimizer = deepcopy(AdamW(client.model.parameters(),
@@ -156,12 +158,16 @@ class Server_fedit(BaseServer):
             torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
             config.save_pretrained(output_dir)
 
-            for metric in lst_global_metrics:
-                run.log({"Train loss": metric['train_loss']})
-                run.log({"Val loss": metric['val_loss']})
-                run.log({"Train acc": metric['train_acc']})
-                run.log({"Val acc": metric['val_acc']})
 
+            round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
+            round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
+            round_train_acc = np.array([metric['train_acc'] for metric in lst_global_metrics]).mean()
+            round_val_acc = np.array([metric['val_acc'] for metric in lst_global_metrics]).mean()
+
+            run.log({"Train Loss": round_train_loss})
+            run.log({"Val Loss": round_val_loss})
+            run.log({"Train Acc": round_train_acc})
+            run.log({"Val Acc": round_val_acc})
 
 
             round_global_metrics = wandb.Table(dataframe=pd.DataFrame(lst_global_metrics))

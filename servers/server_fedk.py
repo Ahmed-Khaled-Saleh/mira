@@ -99,11 +99,15 @@ class Server_fedk(BaseServer):
                 lst_global_metrics.append(metrics)
             
 
-            for metric in lst_global_metrics:
-                run.log({"Train loss": metric['train_loss']})
-                run.log({"Val loss": metric['val_loss']})
-                run.log({"Train acc": metric['train_acc']})
-                run.log({"Val acc": metric['val_acc']})
+            round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
+            round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
+            round_train_acc = np.array([metric['train_acc'] for metric in lst_global_metrics]).mean()
+            round_val_acc = np.array([metric['val_acc'] for metric in lst_global_metrics]).mean()
+
+            run.log({"Train Loss": round_train_loss})
+            run.log({"Val Loss": round_val_loss})
+            run.log({"Train Acc": round_train_acc})
+            run.log({"Val Acc": round_val_acc})
 
 
 
