@@ -1,21 +1,21 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=mahti_fedit
-#SBATCH --partition=gpusmall
+#SBATCH --job-name=puhti_fedit
+#SBATCH --partition=gpu
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=40
 #SBATCH --mem=100G
 #SBATCH --time=8:00:00
-#SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/mahti_fedit.out
-#SBATCH --error=logs/mahti_fedit.err
+#SBATCH --gres=gpu:v100:1
+#SBATCH --output=logs/puhti_fedit.out
+#SBATCH --error=logs/puhti_fedit.err
 
 module --force purge
 module load pytorch
-source /projappl/project_2009050/torch/bin/activate
+source /projappl/project_2009050/python_envs/torch/bin/activate
 cd /projappl/project_2009050/code/mira
 
-export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/torch/lib/python3.9/site-packages
+export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/python_envs/torch/lib/python3.9/site-packages
 echo "Current PYTHONPATH: $PYTHONPATH"
 python -c "import rouge; print('rouge module is installed and importable')"
 

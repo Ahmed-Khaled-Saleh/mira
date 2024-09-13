@@ -3,8 +3,8 @@
 #SBATCH --job-name=fedkseed
 #SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=40
-#SBATCH --mem=320G
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=100G
 #SBATCH --time=24:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --output=logs/fedkseed.out
