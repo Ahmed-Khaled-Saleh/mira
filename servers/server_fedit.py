@@ -16,6 +16,7 @@ from peft import (
     get_peft_model,
     prepare_model_for_kbit_training,
 )
+from transformers import BitsAndBytesConfig
 from torch.nn.functional import normalize
 import wandb
 from utils.validation import *  # noqa: F403
@@ -32,12 +33,15 @@ class Server_fedit(BaseServer):
         self.candidate_seeds = candidate_seeds
         self.tokenizer = tokenizer
         self.log_dir = log_dir
-        
+        self.quant_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+
+        )
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                          load_in_8bit=True,
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
-                                                          device_map={'':0})
+                                                        #   device_map={'':0},
+                                                          quantization_config=self.quant_config)
 
         self.model_w0 = deepcopy(self.model)
         # self.model = self.model.to(self.device)
