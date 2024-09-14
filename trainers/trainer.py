@@ -3,7 +3,6 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
-
 class Trainer:
     def __init__(
         self,
@@ -16,7 +15,7 @@ class Trainer:
             to implement a training loop for a federated learning setup.
         '''
         
-        self.client = client
+        self.client = client       
         self.client.train_loader = self.prepare_dataloader(self.client.train_ds, self.client.args.batch_size, self.client.data_collator)
         self.client.eval_loader = self.prepare_dataloader(self.client.eval_ds, self.client.args.batch_size, self.client.data_collator)
         self.client.train_loader_genr = self.prepare_dataloader(self.client.train_ds_genr, self.client.args.batch_size, self.client.data_collator)
@@ -153,7 +152,7 @@ class Trainer:
         if callbacks:
             callbacks[1](memory_record_dic, self.client.device)
 
-        return train_loss, val_loss, train_acc, eval_acc
+        return train_loss, val_loss
     
     def eval(self):
         total_loss = 0

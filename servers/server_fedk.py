@@ -64,13 +64,15 @@ class Server_fedk(BaseServer):
             print("Starting round ", t)
             print("****************************************")
             for client in selected_client:
-                client.model = deepcopy(self.model)
-                
-                client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
-                                            lr= float(self.args.lr),
-                                            zo_eps= self.args.zo_eps,
-                                            candidate_seeds= self.candidate_seeds,
-                                            weight_decay= self.args.weight_decay))
+                print("Client ", client.idx, " is training")
+
+                if not client.model:
+                    client.model = deepcopy(self.model)
+                    client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
+                                                lr= float(self.args.lr),
+                                                zo_eps= self.args.zo_eps,
+                                                candidate_seeds= self.candidate_seeds,
+                                                weight_decay= self.args.weight_decay)) 
                 
                 trainer = Trainer(client)
             
@@ -78,19 +80,17 @@ class Server_fedk(BaseServer):
                 epochs = 1
                 
                 metrics = {}
-                train_loss, val_loss, train_acc, val_acc = trainer.train(fed= True,
-                                                                         epochs= epochs,
-                                                                         local_iters= local_iters,
-                                                                         memory_record_dic= memory_record_dic,
-                                                                         callbacks=[empty_cach, log_memory])
+                train_loss, val_loss = trainer.train(fed= True,
+                                                    epochs= epochs,
+                                                    local_iters= local_iters,
+                                                    memory_record_dic= memory_record_dic,
+                                                    callbacks=[empty_cach, log_memory])
                 
                 train_loss = np.array(train_loss).mean()
-                task = client.task if isinstance(client.task, str) else client.task[0]
+                val_loss = np.array(val_loss).mean()
+                task = client.task if isinstance(client.task, str) else client.task[0]                
 
-                
-
-                metrics['train_loss'], metrics['val_loss'], metrics['task'], metrics['train_acc'], metrics['val_acc'] = \
-                    train_loss, val_loss, task, train_acc, val_acc
+                metrics['train_loss'], metrics['val_loss'], metrics['task'], metrics['idx'] = train_loss, val_loss, task, client.idx
                 
                 print("Client ", client.idx, " finished training")
                 print("****************************************")
@@ -101,16 +101,11 @@ class Server_fedk(BaseServer):
 
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
-            round_train_acc = np.array([metric['train_acc'] for metric in lst_global_metrics]).mean()
-            round_val_acc = np.array([metric['val_acc'] for metric in lst_global_metrics]).mean()
+            
 
             run.log({"Train Loss": round_train_loss})
             run.log({"Val Loss": round_val_loss})
-            run.log({"Train Acc": round_train_acc})
-            run.log({"Val Acc": round_val_acc})
-
-
-
+            
             round_global_metrics = wandb.Table(dataframe=pd.DataFrame(lst_global_metrics))
             run.log({f"round {t} (GM) Metrics": round_global_metrics})
             
@@ -118,6 +113,11 @@ class Server_fedk(BaseServer):
 
             self.aggregate_seed_pool(selected_client)
             self.update_global_model_by_seed_pool()
+
+
+        train_acc, eval_acc = self.eval_clients(self.client_list)
+        run.log({"Train Accuracy": train_acc})
+        run.log({"Eval Accuracy": eval_acc})
 
         return lst_global_metrics_dfs
 
@@ -163,27 +163,40 @@ class Server_fedk(BaseServer):
         return self.probabilities
 
 
-    def eval_clients(self, clients_list ,cur_round, include_eval= False):
+    def eval_clients(self, clients_list):
         clients_metrics = []
-
+        train_acc = 0
+        eval_acc = 0
+        
         for client in clients_list:
             metrics = {}
+            
+            if not client.model:
+                client.model = deepcopy(self.model)
+
+            trainer = Trainer(client)
+
+            client_train_acc = trainer.train_generate()
+            client_eval_acc = trainer.eval_generate()
 
             task = client.task
             metrics['task'] = task
-
-            train_acc, train_loss = client.train_error_and_loss(deepcopy(self.model))
-            metrics['train_loss'] = train_loss
-            metrics['train_acc'] = train_acc
-
-            if include_eval:
-                eval_acc, eval_loss = client.eval_error_and_loss()             
-                metrics['eval_loss'] = eval_loss
-                metrics['eval_acc'] = eval_acc
+            metrics['train_acc'] = client_train_acc
+            metrics['eval_acc'] = client_eval_acc
+            
 
             clients_metrics.append(metrics)
+            client.clear_model()
+
+        for client_metric in clients_metrics:
+            train_acc += client_metric['train_acc']
+            eval_acc += client_metric['eval_acc']
         
-        return clients_metrics
+        train_acc /= len(clients_metrics)
+        eval_acc /= len(clients_metrics)
+
+
+        return train_acc, eval_acc
     
     
     
