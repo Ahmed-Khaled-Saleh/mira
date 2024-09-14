@@ -134,8 +134,6 @@ class Trainer:
             callbacks[0](memory_record_dic)
 
         val_loss = self.eval()
-        train_acc = self.train_generate()
-        eval_acc = self.eval_generate()
 
         train_loss = []
         for _ in range(epochs):
