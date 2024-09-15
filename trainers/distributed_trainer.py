@@ -1,85 +1,88 @@
 import torch
-import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+import torch.distributed as dist
 import torch.multiprocessing as mp
-from torch.utils.data.distributed import DistributedSampler
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import all_reduce, ReduceOp
 import os
-from optimizers.mezo_torch import MeZOOptimizer
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader
 
+class DDPTrainer:
+    def __init__(self, client, world_size):
+        self.client = client
+        self.world_size = world_size
 
+    def setup(self, rank, world_size):
+        os.environ['MASTER_ADDR'] = 'localhost'
+        os.environ['MASTER_PORT'] = '12355'
+        dist.init_process_group("nccl", rank=rank, world_size=world_size)
 
+    def cleanup(self):
+        dist.destroy_process_group()
 
-class Trainer:
-    def __init__(
-        self,
-        model: torch.nn.Module,
-        train_loader: DataLoader,
-        optimizer: MeZOOptimizer,
-    ) -> None:
-        self.local_rank = int(os.environ['LOCAL_RANK'])
-        torch.cuda.set_device(self.local_rank)
-        self.model = model.to(self.local_rank)
-        self.train_loader = train_loader
-        self.optimizer = optimizer
-        self.model = DDP(self.model, device_ids=[self.local_rank])
+    def prepare_dataloader(self, dataset, batch_size, data_collator):
+        sampler = DistributedSampler(dataset)
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            pin_memory=True,
+            shuffle=False,  # Sampler handles shuffling
+            collate_fn=data_collator,
+            sampler=sampler
+        )
+
+    def run(self, rank, world_size):
+        self.setup(rank, world_size)
         
-    def _run_batch(self, batch):
-        self.optimizer.zero_grad()
-        def closure():
-            return self.model(**batch)
+        # Move model to the correct device
+        self.client.model = self.client.model.to(rank)
+        
+        # Wrap model in DDP
+        self.client.model = DDP(self.client.model, device_ids=[rank])
+        
+        # Prepare data loaders
+        self.client.train_loader = self.prepare_dataloader(
+            self.client.train_ds, 
+            self.client.args.batch_size, 
+            self.client.data_collator
+        )
+        self.client.eval_loader = self.prepare_dataloader(
+            self.client.eval_ds, 
+            self.client.args.batch_size, 
+            self.client.data_collator
+        )
 
-        loss = self.optimizer.step(closure)
-        print(loss)
-        return loss.item()
+        # Training loop
+        for epoch in range(self.client.args.epochs):
+            self.train_epoch(rank)
+            if rank == 0:  # Only evaluate on one GPU
+                self.evaluate(rank)
 
-    def _run_epoch(self, epoch):
-        b_sz = len(next(iter(self.train_loader))['input_ids'])
-        print(f"[GPU{self.local_rank}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_loader)}")
-        self.train_loader.sampler.set_epoch(epoch)
-        total_loss = 0
-        for batch in self.train_loader:
+        self.cleanup()
+
+    def train_epoch(self, rank):
+        self.client.model.train()
+        for batch in self.client.train_loader:
+            batch = {k: v.to(rank) for k, v in batch.items()}
             
-            batch = {
-                    'input_ids': batch['input_ids'].to(self.local_rank),
-                    'labels': batch['labels'].to(self.local_rank),
-                    'attention_mask': batch['attention_mask'].to(self.local_rank) 
-                }
-            
-            # batch = {k: v.to(self.local_rank) for k, v in batch.items()}
+            self.client.optimizer.zero_grad()
             loss = self._run_batch(batch)
-            total_loss += loss
-        return total_loss / len(self.train_loader)
+            loss.backward()
+            self.client.optimizer.step()
 
-    def _save_checkpoint(self, epoch):
-        ckp = self.model.module.state_dict()
-        PATH = f"checkpoint_epoch_{epoch}.pt"
-        torch.save(ckp, PATH)
-        print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+    def evaluate(self, rank):
+        self.client.model.eval()
+        total_loss = 0
+        with torch.no_grad():
+            for batch in self.client.eval_loader:
+                batch = {k: v.to(rank) for k, v in batch.items()}
+                loss = self._run_batch(batch)
+                total_loss += loss.item()
+        avg_loss = total_loss / len(self.client.eval_loader)
+        print(f"Evaluation Loss: {avg_loss}")
 
-    
-    def train(self, max_epochs: int):
-        print(f'Training at GPU: {self.local_rank}')
-        epoch_losses = []
-        for epoch in range(max_epochs):
-            epoch_loss = self._run_epoch(epoch)
-            # Synchronize loss across processes
-            all_reduce(epoch_loss, op=ReduceOp.SUM)
-            epoch_loss /= self.world_size
-            
-            epoch_losses.append(epoch_loss.item())
-            print(f"[GPU{self.local_rank}] Epoch {epoch} | Loss: {epoch_loss:.4f}")
-        
-        return epoch_losses
-    
-def prepare_dataloader(dataset: Dataset, batch_size: int, data_collator):
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        pin_memory=True,
-        shuffle=False,
-        sampler=DistributedSampler(dataset),
-        collate_fn=data_collator        
-    )
+    def _run_batch(self, batch):
+        outputs = self.client.model(**batch)
+        return self.client.criterion(outputs)
 
+    def train(self, fed=False, epochs=10, local_iters=1, memory_record_dic=None, callbacks=[]):
+        mp.spawn(self.run, args=(self.world_size,), nprocs=self.world_size, join=True)

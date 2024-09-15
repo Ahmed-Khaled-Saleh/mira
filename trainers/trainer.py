@@ -184,7 +184,7 @@ class Trainer:
             print(f'Client {self.client.idx} Eval loss is : {total_loss / len(self.client.eval_loader)}')
             print("****************************************")
                 
-        return total_loss / len(self.client.eval_loader)
+        return (total_loss / len(self.client.eval_loader)).item()
     
     def train_generate(self):
         print("****************************************")

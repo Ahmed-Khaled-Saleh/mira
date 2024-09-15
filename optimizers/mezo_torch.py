@@ -37,38 +37,51 @@ class MeZOOptimizer(Optimizer):
     def step(self, closure):
         if closure is None:
             raise ValueError("Closure is required for MeZOOptimizer")
+        
         self.candidate_seeds = self.get_candidate_seeds()
-        print(f"Candidate seeds: {self.candidate_seeds}")
         self.zo_random_seed = np.random.choice(self.candidate_seeds, 1)[0]
         self.zo_eps = self.get_zoeps()
 
-        orig_params = {}
+        # Generate perturbations for all parameters at once
+        perturbations = []
         for group in self.param_groups:
             for p in group['params']:
-                orig_params[p] = p.clone()
+                torch.manual_seed(self.zo_random_seed)
+                perturbations.append(torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype))
 
-        # Positive perturbation
-        self._perturb_parameters(scaling_factor=1)
+        # Apply positive perturbations
+        with torch.no_grad():
+            for (group, perturb) in zip(self.param_groups, perturbations):
+                for p, z in zip(group['params'], perturb):
+                    p.add_(self.zo_eps * z)
+
         loss_pos = closure()
 
-        # Restore original parameters
-        self._restore_parameters(orig_params)
+        # Apply negative perturbations (2 * -zo_eps * z = -2 * zo_eps * z)
+        with torch.no_grad():
+            for (group, perturb) in zip(self.param_groups, perturbations):
+                for p, z in zip(group['params'], perturb):
+                    p.add_(-2 * self.zo_eps * z)
 
-        # Negative perturbation
-        self._perturb_parameters(scaling_factor=-1)
         loss_neg = closure()
 
-        self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
-
         # Restore original parameters
-        self._restore_parameters(orig_params)
+        with torch.no_grad():
+            for (group, perturb) in zip(self.param_groups, perturbations):
+                for p, z in zip(group['params'], perturb):
+                    p.add_(self.zo_eps * z)
+
+        self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
 
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
             return loss_pos
 
         self._sgd_step()
         return loss_pos, self.zo_random_seed, self.projected_grad
-    
+
+
+
+
     def _sgd_step(self, seed= None, grad= None):
         
         self.candidate_seeds = self.get_candidate_seeds()
