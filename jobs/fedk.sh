@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --output=logs/fedkseed.out
 #SBATCH --error=logs/fedkseed.err
