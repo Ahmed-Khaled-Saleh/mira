@@ -15,8 +15,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 from transformers import AutoTokenizer
-from data.utils_data.default_tokens import DefaultToken
-from data.utils_data.partition_data import partition_idx_labeldir
+from utils_data.default_tokens import DefaultToken
+from utils_data.partition_data import partition_idx_labeldir
 from collections import Counter
 import os
 
@@ -274,7 +274,7 @@ def get_loaders(args, only_eval=False):
 
         
     elif args.dataset in ['instruct']:
-        from data.utils_data.natural_instruction_loader import get_instruction_dataset
+        from utils_data.natural_instruction_loader import get_instruction_dataset
         list_train_loader, eval_loader = get_instruction_dataset(args, tokenizer, only_eval=only_eval)
     else:
         raise AttributeError(f'dataset {args.dataset} not implemented')
