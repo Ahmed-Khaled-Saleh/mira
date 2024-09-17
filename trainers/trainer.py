@@ -3,7 +3,6 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
-from utils.helper_fuctions import tqdm_output
 class Trainer:
     def __init__(
         self,
@@ -73,8 +72,8 @@ class Trainer:
                 
                 if i % 1000 == 999:
                     last_loss = total_loss / 1000 
-                    # progress_bar.update(i)
-                    # progress_bar.set_description(f'client {self.client.idx} Fuly Local Training , loss: {last_loss}')
+                    progress_bar.update(i)
+                    progress_bar.set_description(f'client {self.client.idx} Fuly Local Training , loss: {last_loss}')
     
         return total_loss / len(self.client.train_loader)
     
@@ -109,8 +108,8 @@ class Trainer:
                     num_trained = 1e-10
 
                 print(f'Batch loss is {loss}')
-                # progress_bar.update(1)
-                # progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
+                progress_bar.update(1)
+                progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
 
                 total_loss += loss.item()
                 num_trained += len(batch['input_ids'])
