@@ -50,6 +50,7 @@ class Client_fedk(BaseClient):
         # if self.args.dataset == 'dolly':
         #     self.task = self.train_ds[0].dataset[0]['task']
         # else:
+        print(self.train_ds[0])
         self.task = self.train_ds[0]['task']
 
         self.task = self.task if isinstance(self.task, str) else self.task[0]
