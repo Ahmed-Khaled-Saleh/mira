@@ -28,11 +28,14 @@ class Trainer:
         def closure():
             out = self.client.model(**batch)
             return self.client.criterion(out)
-        import ipdb; ipdb.set_trace()
+        
         if self.client.args.name in ['fedk', 'mira']:
-            loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
-            self.client._add_seed_pole(zo_random_seed, projected_grad)
-            
+            try:
+
+                loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
+                self.client._add_seed_pole(zo_random_seed, projected_grad)
+            except:
+                import ipdb; ipdb.set_trace()
         else:
             loss = closure()
             loss.backward()
