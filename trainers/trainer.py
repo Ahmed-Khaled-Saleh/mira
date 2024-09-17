@@ -25,14 +25,25 @@ class Trainer:
         
     def _run_batch(self, batch):
         self.client.optimizer.zero_grad()
+
         def closure():
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
-            print(f"Closure: Loss calculated, Loss :{loss}, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
+            if torch.isnan(loss):
+                print("Warning: NaN loss detected in closure")
+                return torch.tensor(float('inf'), device=loss.device)
             return loss
         
         if self.client.args.name in ['fedk', 'mira']:
             loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
+            if torch.isnan(loss):
+                print("Warning: NaN loss returned from optimizer step")
+                return torch.tensor(float('inf'), device=loss.device)
+        
+            if torch.isnan(projected_grad).any():
+                print("Warning: NaN detected in projected gradient after optimizer step")
+                projected_grad = torch.zeros_like(projected_grad)
+
             self.client._add_seed_pole(zo_random_seed, projected_grad)
         
         else:
@@ -40,9 +51,7 @@ class Trainer:
             loss.backward()
             self.client.optimizer.step()
         
-        if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-            return loss
-        return 0
+        return loss
     
     def _run_epoch(self):
         total_loss = 0
@@ -104,9 +113,8 @@ class Trainer:
                 progress_bar.update(1)
                 progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
 
-                if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    total_loss += loss
-                    num_trained += len(batch['input_ids'])
+                total_loss += loss.item()
+                num_trained += len(batch['input_ids'])
 
             return total_loss / num_trained
         
@@ -145,7 +153,7 @@ class Trainer:
             else:
                 avg_train_loss = self._run_epoch()
 
-            train_loss.append(avg_train_loss.item())
+            train_loss.append(avg_train_loss)
 
         self.client.model = None
         
@@ -166,6 +174,8 @@ class Trainer:
         def _run_batch(batch):
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
+            if torch.isnan(loss):
+                return torch.tensor(float(0), device=loss.device)
             return loss
         
         with torch.no_grad():
@@ -181,12 +191,12 @@ class Trainer:
                 print(f"Client {self.client.idx}'s Batch loss inside eval() : {loss}")
 
                 if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    total_loss += loss              
+                    total_loss += loss.item()              
                 
             print(f'Client {self.client.idx} Eval loss is : {total_loss / len(self.client.eval_loader)}')
             print("****************************************")
                 
-        return (total_loss / len(self.client.eval_loader)).item()
+        return (total_loss / len(self.client.eval_loader))
     
     def train_generate(self):
         print("****************************************")
