@@ -35,7 +35,7 @@ class Trainer:
                 loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
                 self.client._add_seed_pole(zo_random_seed, projected_grad)
             except:
-                import ipdb; ipdb.set_trace()
+                loss = 0.0
         else:
             loss = closure()
             loss.backward()
