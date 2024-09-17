@@ -1,8 +1,8 @@
-- name: 'fedk_dist'
-  num_clients: 60
+- name: 'mira'
+  num_clients: 200
   num_clients_per_task: 25
   m: 0.05
-  rounds: 30
+  rounds: 40
   local_step: 200
   batch_or_epoch: 'batch'
   equal_weight: false
@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
+  model: 'openai-community/gpt2'
   lr: 3e-07
   weight_decay: 0.0
   grad_clip: -100.0
@@ -29,5 +29,4 @@
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'FEDMIRA'
-  num_gpus: 4
+  project: 'MIRA'

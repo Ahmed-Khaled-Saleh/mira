@@ -1,5 +1,5 @@
-- name: 'fedk'
-  num_clients: 738
+- name: 'fedit'
+  num_clients: 200
   num_clients_per_task: 25
   m: 0.05
   rounds: 40
@@ -13,8 +13,8 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
-  lr: 3e-07
+  model: 'google-t5/t5-small'
+  lr: 3e-04
   weight_decay: 0.0
   grad_clip: -100.0
   K: 4096

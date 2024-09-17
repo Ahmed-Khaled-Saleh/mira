@@ -1,20 +1,20 @@
-- name: 'fedit'
-  num_clients: 100
+- name: 'mira'
+  num_clients: 200
   num_clients_per_task: 25
   m: 0.05
   rounds: 40
   local_step: 200
   batch_or_epoch: 'batch'
   equal_weight: false
-  dataset: 'instruct'
-  batch_size: 64
+  dataset: 'dolly'
+  batch_size: 1
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
-  lr: 3e-4
+  model: 'openai-community/gpt2'
+  lr: 3e-07
   weight_decay: 0.0
   grad_clip: -100.0
   K: 4096
@@ -29,4 +29,4 @@
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'FEDMIRA'
+  project: 'MIRA'
