@@ -65,7 +65,14 @@ class MeZOOptimizer(Optimizer):
         self._restore_parameters(orig_params)
 
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
-            return loss_pos
+            print("Warning: NaN loss detected in optimizer step")
+            return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
+    
+        self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
+    
+        if torch.isnan(self.projected_grad).any():
+            print("Warning: NaN detected in projected gradient")
+            self.projected_grad = torch.zeros_like(self.projected_grad)
 
         self._sgd_step()
         return loss_pos, self.zo_random_seed, self.projected_grad
@@ -89,6 +96,11 @@ class MeZOOptimizer(Optimizer):
             for p in group['params']:
                 if p.grad is None:
                     p.grad = torch.zeros_like(p)
+                d_p = p.grad
+                if torch.isnan(d_p).any():
+                    print(f"Warning: NaN gradient detected for parameter {p}")
+                    d_p = torch.zeros_like(d_p)
+                torch.nn.utils.clip_grad_norm_(p, max_norm=1.0)
                 
                 torch.manual_seed(seed)
                 z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
