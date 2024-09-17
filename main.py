@@ -79,8 +79,7 @@ def process_main(args_config_fname):
     
     def criterion(out):
         loss = out.loss
-        print(f"Criterion: Loss calculated, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
-        return 
+        return loss
 
     kwargs = {"list_train_ds": list_train_ds, 
               "list_eval_ds": list_eval_ds, 

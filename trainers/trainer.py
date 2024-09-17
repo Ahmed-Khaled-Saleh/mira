@@ -172,12 +172,8 @@ class Trainer:
         def _run_batch(batch):
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
-            print("Batch loss inside eval() : {loss}")
-            print(type(loss))
-            # if torch.isnan(loss):
-            #     return torch.tensor(float(0), device=loss.device)
-            if not loss: 
-                return torch.tensor(float(0), device=self.client.device)
+            if torch.isnan(loss):
+                return torch.tensor(float(0), device=loss.device)
             return loss
         
         with torch.no_grad():
