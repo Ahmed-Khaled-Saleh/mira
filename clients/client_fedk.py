@@ -47,11 +47,11 @@ class Client_fedk(BaseClient):
         self.candidate_seeds = candidate_seeds
         self.local_seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
 
-        if self.args.data == 'dolly':
+        if self.args.dataset == 'dolly':
             self.task = self.train_ds[0]['category']
         else:
             self.task = self.train_ds[0]['task']
-            
+
         self.task = self.task if isinstance(self.task, str) else self.task[0]
         self.train_stat = {}
         self.test_stats = {}
