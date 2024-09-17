@@ -26,8 +26,12 @@ class Trainer:
     def _run_batch(self, batch):
         self.client.optimizer.zero_grad()
         def closure():
-            out = self.client.model(**batch)
-            return self.client.criterion(out)
+            try:
+                out = self.client.model(**batch)
+                loss = self.client.criterion(out)
+            except:
+                print(batch)
+                import ipdb; ipdb.set_trace()
         
         if self.client.args.name in ['fedk', 'mira']:
 
