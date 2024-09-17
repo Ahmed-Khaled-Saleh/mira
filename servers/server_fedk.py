@@ -23,7 +23,12 @@ class Server_fedk(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         
-        self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', torch_dtype=torch.float16, trust_remote_code=True)
+        if self.args.model == 'google-t5/t5-small':
+            from transformers import T5ForConditionalGeneration, T5Tokenizer
+            self.model = T5ForConditionalGeneration.from_pretrained("t5-small")
+
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', torch_dtype=torch.float16, trust_remote_code=True)
 
         self.model_w0 = deepcopy(self.model)
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
