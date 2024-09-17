@@ -52,7 +52,22 @@ def softmax(vec):
     softmax_x = exp_x / np.sum(exp_x)
     return softmax_x
 
+import sys
+from unittest.mock import patch
+from contextlib import contextmanager
 
+@contextmanager
+def tqdm_output(tqdm, write=sys.stderr.write):
+    def wrapper(message):
+        if message != '\n':
+            tqdm.clear()
+        write(message)
+        if '\n' in message:
+            tqdm.display()
+
+    with patch('sys.stdout', sys.stderr), patch('sys.stderr.write', wrapper):
+        yield tqdm
+        
 def min_max_norm(vec):
     min_val = np.min(vec)
     return (vec - min_val) / (np.max(vec) + 1e-10 - min_val)

@@ -93,7 +93,6 @@ class Server_fedit(BaseServer):
             lst_global_metrics = []
             print("Starting round ", t)
             print("****************************************")
-            round_loss = 0.0
             for client in selected_client:
                 
                 config = LoraConfig(

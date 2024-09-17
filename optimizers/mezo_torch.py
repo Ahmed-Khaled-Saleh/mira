@@ -58,8 +58,6 @@ class MeZOOptimizer(Optimizer):
         self._perturb_parameters(scaling_factor=-1)
         loss_neg = closure()
 
-        self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
-
         # Restore original parameters
         self._restore_parameters(orig_params)
 
