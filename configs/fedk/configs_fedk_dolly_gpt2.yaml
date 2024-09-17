@@ -1,8 +1,8 @@
 - name: 'fedk'
-  num_clients: 200
-  num_clients_per_task: 25
-  m: 0.05
-  rounds: 40
+  num_clients: 80
+  num_clients_per_task: 10
+  m: 0.1
+  rounds: 60
   local_step: 200
   batch_or_epoch: 'batch'
   equal_weight: false
