@@ -37,38 +37,54 @@ class MeZOOptimizer(Optimizer):
     def step(self, closure):
         if closure is None:
             raise ValueError("Closure is required for MeZOOptimizer")
+        
+        print("Step 1: Getting candidate seeds")
         self.candidate_seeds = self.get_candidate_seeds()
         print(f"Candidate seeds: {self.candidate_seeds}")
+        
+        print("Step 2: Choosing random seed")
         self.zo_random_seed = np.random.choice(self.candidate_seeds, 1)[0]
+        print(f"Chosen seed: {self.zo_random_seed}")
+        
+        print("Step 3: Getting zo_eps")
         self.zo_eps = self.get_zoeps()
-
+        print(f"zo_eps: {self.zo_eps}")
+        
+        print("Step 4: Storing original parameters")
         orig_params = {}
         for group in self.param_groups:
             for p in group['params']:
                 orig_params[p] = p.clone()
-
-        # Positive perturbation
+        
+        print("Step 5: Positive perturbation")
         self._perturb_parameters(scaling_factor=1)
         loss_pos = closure()
-
-        # Restore original parameters
+        print(f"Positive loss: {loss_pos}, type: {type(loss_pos)}, shape: {loss_pos.shape if hasattr(loss_pos, 'shape') else 'N/A'}")
+        
+        print("Step 6: Restoring original parameters")
         self._restore_parameters(orig_params)
-
-        # Negative perturbation
+        
+        print("Step 7: Negative perturbation")
         self._perturb_parameters(scaling_factor=-1)
         loss_neg = closure()
-
+        print(f"Negative loss: {loss_neg}, type: {type(loss_neg)}, shape: {loss_neg.shape if hasattr(loss_neg, 'shape') else 'N/A'}")
+        
+        print("Step 8: Calculating projected gradient")
         self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
-
-        # Restore original parameters
+        print(f"Projected grad: {self.projected_grad}, type: {type(self.projected_grad)}, shape: {self.projected_grad.shape if hasattr(self.projected_grad, 'shape') else 'N/A'}")
+        
+        print("Step 9: Restoring original parameters again")
         self._restore_parameters(orig_params)
-
+        
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
+            print("NaN loss detected")
             return loss_pos
-
+        
+        print("Step 10: Performing SGD step")
         self._sgd_step()
+        
+        print("Step 11: Returning results")
         return loss_pos, self.zo_random_seed, self.projected_grad
-    
     def _sgd_step(self, seed= None, grad= None):
         
         self.candidate_seeds = self.get_candidate_seeds()
