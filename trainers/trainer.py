@@ -30,12 +30,21 @@ class Trainer:
             return self.client.criterion(out)
         
         if self.client.args.name in ['fedk', 'mira']:
-            try:
+            # try:
 
+            #     loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
+            #     self.client._add_seed_pole(zo_random_seed, projected_grad)
+            # except:
+            #     loss = 0.0
+
+            try:
                 loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
-                self.client._add_seed_pole(zo_random_seed, projected_grad)
-            except:
-                loss = 0.0
+            except TypeError as e:
+                print(f"Error in optimizer step: {e}")
+                print(f"Closure: {closure}")
+                print(f"Optimizer state: {self.client.optimizer.state_dict()}")
+            raise
+        
         else:
             loss = closure()
             loss.backward()
