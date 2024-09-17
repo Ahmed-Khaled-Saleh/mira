@@ -32,6 +32,7 @@ class Trainer:
             except:
                 print(batch)
                 import ipdb; ipdb.set_trace()
+            print(f"Closure: Loss calculated, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
             return loss
         
         if self.client.args.name in ['fedk', 'mira']:

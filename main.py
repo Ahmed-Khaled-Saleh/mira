@@ -78,7 +78,9 @@ def process_main(args_config_fname):
     candidate_seeds = np.random.randint(1, 100000000000, args.K)
     
     def criterion(out):
-        return out.loss
+        loss = out.loss
+        print(f"Criterion: Loss calculated, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
+        return 
 
     kwargs = {"list_train_ds": list_train_ds, 
               "list_eval_ds": list_eval_ds, 

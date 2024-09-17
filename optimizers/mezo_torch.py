@@ -50,6 +50,7 @@ class MeZOOptimizer(Optimizer):
         # Positive perturbation
         self._perturb_parameters(scaling_factor=1)
         loss_pos = closure()
+        print(f"loss_pos shape: {loss_pos.shape if hasattr(loss_pos, 'shape') else 'scalar'}")
 
         # Restore original parameters
         self._restore_parameters(orig_params)
@@ -57,6 +58,7 @@ class MeZOOptimizer(Optimizer):
         # Negative perturbation
         self._perturb_parameters(scaling_factor=-1)
         loss_neg = closure()
+        print(f"loss_neg shape: {loss_neg.shape if hasattr(loss_neg, 'shape') else 'scalar'}")
 
         self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
 
