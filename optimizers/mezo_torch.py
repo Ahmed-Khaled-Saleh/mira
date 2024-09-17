@@ -73,7 +73,6 @@ class MeZOOptimizer(Optimizer):
     def _sgd_step(self, seed= None, grad= None):
         
         self.candidate_seeds = self.get_candidate_seeds()
-        print(f"Candidate seeds: {self.candidate_seeds}")
 
         if seed is None:
             seed = self.zo_random_seed
