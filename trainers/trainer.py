@@ -26,27 +26,14 @@ class Trainer:
     def _run_batch(self, batch):
         self.client.optimizer.zero_grad()
         def closure():
-            try:
-                out = self.client.model(**batch)
-                loss = self.client.criterion(out)
-            except:
-                print(batch)
-                import ipdb; ipdb.set_trace()
-            print(f"Closure: Loss calculated, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
+            out = self.client.model(**batch)
+            loss = self.client.criterion(out)
+            print(f"Closure: Loss calculated, Loss :{loss}, shape: {loss.shape if hasattr(loss, 'shape') else 'scalar'}")
             return loss
         
         if self.client.args.name in ['fedk', 'mira']:
-
             loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
             self.client._add_seed_pole(zo_random_seed, projected_grad)
-
-            # try:
-            #     loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
-            # except TypeError as e:
-            #     print(f"Error in optimizer step: {e}")
-            #     print(f"Closure: {closure}")
-            #     print(f"Optimizer state: {self.client.optimizer.state_dict()}")
-            # raise
         
         else:
             loss = closure()

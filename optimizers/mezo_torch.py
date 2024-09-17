@@ -38,7 +38,6 @@ class MeZOOptimizer(Optimizer):
         if closure is None:
             raise ValueError("Closure is required for MeZOOptimizer")
         self.candidate_seeds = self.get_candidate_seeds()
-        print(f"Candidate seeds: {self.candidate_seeds}")
         self.zo_random_seed = np.random.choice(self.candidate_seeds, 1)[0]
         self.zo_eps = self.get_zoeps()
 
