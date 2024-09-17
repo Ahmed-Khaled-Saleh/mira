@@ -177,7 +177,7 @@ class Trainer:
             # if torch.isnan(loss):
             #     return torch.tensor(float(0), device=loss.device)
             if not loss: 
-                return torch.tensor(float(0), device=loss.device)
+                return torch.tensor(float(0), device=self.client.device)
             return loss
         
         with torch.no_grad():
