@@ -32,6 +32,7 @@ class Trainer:
             except:
                 print(batch)
                 import ipdb; ipdb.set_trace()
+            return loss
         
         if self.client.args.name in ['fedk', 'mira']:
 
