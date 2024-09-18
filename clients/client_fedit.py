@@ -85,16 +85,16 @@ class Client_fedit(BaseClient):
 
     def terminate_local_training(self, epoch, local_dataset_len_dict, previously_selected_clients_set):
 
-        local_dataset_len_dict[self.client_id] = len(self.train_ds)
+        local_dataset_len_dict[self.idx] = len(self.train_ds)
         new_adapter_weight = self.model.state_dict()
-        single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(self.client_id))
+        single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(self.idx))
         os.makedirs(single_output_dir, exist_ok=True)
         torch.save(new_adapter_weight, single_output_dir + "/pytorch_model.bin")
 
         older_adapter_weight = get_peft_model_state_dict(self.model, self.params_dict_old, "default")
         set_peft_model_state_dict(self.model, older_adapter_weight, "default")
-        previously_selected_clients_set = previously_selected_clients_set | set({self.client_id})
-        last_client_id = self.client_id
+        previously_selected_clients_set = previously_selected_clients_set | set({self.idx})
+        last_client_id = self.idx
 
         return self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id
 
