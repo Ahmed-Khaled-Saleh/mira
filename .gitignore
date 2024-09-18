@@ -2,6 +2,7 @@ __pycache__
 *./__pycache__
 */ckpt
 */logs
+*/wandb/*
 *.pth
 .idea
 *.jpg
