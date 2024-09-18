@@ -77,7 +77,7 @@ class Server_fedk(BaseServer):
                                                 lr= float(self.args.lr),
                                                 zo_eps= self.args.zo_eps,
                                                 candidate_seeds= self.candidate_seeds,
-                                                weight_decay= self.args.weight_decay)) 
+                                                weight_decay= float(self.args.weight_decay))) 
                 
                 trainer = Trainer(client)
             
