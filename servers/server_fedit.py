@@ -50,7 +50,7 @@ class Server_fedit(BaseServer):
         self.config = LoraConfig(
                     r=self.args.r,
                     lora_alpha=16,
-                    target_modules=["q_proj",],
+                    target_modules=["c_attn",],
                     lora_dropout=0.05,
                     bias="none",
                     task_type="CAUSAL_LM",
