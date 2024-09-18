@@ -6,7 +6,7 @@ class MeZOOptimizer(Optimizer):
     def __init__(self, 
                  params, 
                  lr= 0.000003,
-                 zo_eps=0.0005,
+                 zo_eps=0.000005,
                  candidate_seeds= None,
                  weight_decay=0.0):
         
