@@ -138,15 +138,16 @@ class Server_fedit(BaseServer):
                 print(f"Round Sats for client {client.idx}: {metrics}")
 
                 lst_global_metrics.append(metrics)
-                # client.clear_model()
-                # del client.optimizer
+                
 
 
                 self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
                     client.terminate_local_training(t, 
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
-                    
+                client.clear_model()
+                del client.optimizer
+                
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
                                         self.model,
