@@ -8,6 +8,7 @@ from peft import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
+from peft import PeftModel, PeftConfig
 from utils.validation import *  # noqa: F403
 from optimizers.mezo_torch import MeZOOptimizer
 from trainers.trainer import Trainer

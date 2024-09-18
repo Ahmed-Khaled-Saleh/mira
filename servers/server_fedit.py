@@ -41,6 +41,7 @@ class Server_fedit(BaseServer):
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                         #   device_map={'':0},
+                                                           device_map='auto',
                                                           quantization_config=self.quant_config)
 
         self.model_w0 = deepcopy(self.model)
