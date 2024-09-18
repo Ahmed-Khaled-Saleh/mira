@@ -109,12 +109,13 @@ class Server_fedk(BaseServer):
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
             
-
-            run.log({"Train Loss": round_train_loss})
-            run.log({"Val Loss": round_val_loss})
-            
             round_global_metrics = wandb.Table(dataframe=pd.DataFrame(lst_global_metrics))
-            run.log({f"round {t} (GM) Metrics": round_global_metrics})
+
+            run.log({"Train Loss": round_train_loss,
+                     "Val Loss": round_val_loss,
+                     f"round {t} (GM) Metrics": round_global_metrics})
+            
+            
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
@@ -123,8 +124,8 @@ class Server_fedk(BaseServer):
 
 
         train_acc, eval_acc = self.eval_clients(self.client_list)
-        run.log({"Train Accuracy": train_acc})
-        run.log({"Eval Accuracy": eval_acc})
+        run.log({"Train Accuracy": train_acc,
+                 "Eval Accuracy": eval_acc})
 
         return lst_global_metrics_dfs
 
