@@ -57,7 +57,7 @@ class Server_fedit(BaseServer):
                     task_type="CAUSAL_LM",
                 )
         
-        # self.model = get_peft_model(self.model, self.config)
+        self.model = get_peft_model(self.model, self.config)
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
