@@ -1,9 +1,9 @@
 - name: 'fedk'
   num_clients: 200
-  num_clients_per_task: 25
+  num_clients_per_task: 10
   m: 0.05
   rounds: 40
-  local_step: 200
+  local_step: 50
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'instruct'
@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'openai-community/gpt2'
-  lr: 1e-04
+  lr: 3e-04
   weight_decay: 0.0
   grad_clip: -100.0
   K: 4096
