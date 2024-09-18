@@ -49,10 +49,10 @@ class Trainer:
             self.client._add_seed_pole(zo_random_seed, projected_grad)
         
         else:
+            loss = closure()
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
                 return torch.tensor(float(0), device=loss.device)
-            loss = closure()
             loss.backward()
             self.client.optimizer.step()
         
