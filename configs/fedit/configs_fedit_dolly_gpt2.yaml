@@ -1,4 +1,4 @@
-- name: 'fedit_gpt2_dolly'
+- name: 'fedit'
   num_clients: 80
   num_clients_per_task: 10
   m: 0.1
