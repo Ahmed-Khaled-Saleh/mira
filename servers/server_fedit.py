@@ -25,7 +25,7 @@ from trainers.trainer import Trainer
 from trainers.callbacks import empty_cach, log_memory
 from torch.optim import AdamW
 from servers.base_server import BaseServer
-
+from optimizers.mezo_torch import MeZOOptimizer
 
 class Server_fedit(BaseServer):
     def __init__(self, args, tokenizer, candidate_seeds, log_dir, **kwargs):
@@ -47,7 +47,16 @@ class Server_fedit(BaseServer):
         # self.model = self.model.to(self.device)
         self.model = prepare_model_for_kbit_training(self.model)
         
+        self.config = LoraConfig(
+                    r=self.args.r,
+                    lora_alpha=16,
+                    target_modules=["q_proj",],
+                    lora_dropout=0.05,
+                    bias="none",
+                    task_type="CAUSAL_LM",
+                )
         
+        self.model = get_peft_model(self.model, self.config)
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
@@ -94,22 +103,16 @@ class Server_fedit(BaseServer):
             print("Starting round ", t)
             print("****************************************")
             for client in selected_client:
-                
-                config = LoraConfig(
-                    r=self.args.r,
-                    lora_alpha=16,
-                    target_modules=["q_proj",],
-                    lora_dropout=0.05,
-                    bias="none",
-                    task_type="CAUSAL_LM",
-                )
+                print("Client ", client.idx, " is training")
 
-                client.model = deepcopy(get_peft_model(self.model, config))
-                # client.model = deepcopy(self.model)
+                if not client.model:
+                    client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
-                client.optimizer = deepcopy(AdamW(client.model.parameters(),
+                client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
                                             lr= float(self.args.lr),
+                                            zo_eps= self.args.zo_eps,
+                                            candidate_seeds= self.candidate_seeds,
                                             weight_decay= self.args.weight_decay))
                 
                 trainer = Trainer(client)
@@ -118,33 +121,31 @@ class Server_fedit(BaseServer):
                 epochs = 1
                 
                 metrics = {}
-                train_loss, val_loss, train_acc, val_acc = trainer.train(fed= True,
-                                                                         epochs= epochs,
-                                                                         local_iters= local_iters,
-                                                                         memory_record_dic= memory_record_dic,
-                                                                         callbacks=None)
+                train_loss, val_loss = trainer.train(fed= True,
+                                                    epochs= epochs,
+                                                    local_iters= local_iters,
+                                                    memory_record_dic= memory_record_dic,
+                                                    callbacks=[empty_cach, log_memory])
                 
                 train_loss = np.array(train_loss).mean()
+                val_loss = np.array(val_loss).mean()
                 task = client.task if isinstance(client.task, str) else client.task[0]
 
-                metrics['train_loss'], metrics['val_loss'], metrics['task'], metrics['train_acc'], metrics['val_acc'] = \
-                    train_loss, val_loss, task, train_acc, val_acc
-                
+                metrics['train_loss'], metrics['val_loss'], metrics['task'], metrics['idx'] = train_loss, val_loss, task, client.idx
+                print("Client ", client.idx, " finished training")
+                print("****************************************")
+                print(f"Round Sats for client {client.idx}: {metrics}")
+
+                lst_global_metrics.append(metrics)
+                client.clear_model()
+                del client.optimizer
+
+
                 self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
                     client.terminate_local_training(t, 
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
-                
-
-                print("Client ", client.idx, " finished training")
-                print("****************************************")
-                print(f"Round Sats for client {self.client.idx}: {metrics}")
-
-                lst_global_metrics.append(metrics)
-
-                del client
-
-        
+                    
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
                                         self.model,
@@ -154,26 +155,25 @@ class Server_fedit(BaseServer):
                                         t,
                                         )
             
-            torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
-            config.save_pretrained(output_dir)
-
-
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
-            round_train_acc = np.array([metric['train_acc'] for metric in lst_global_metrics]).mean()
-            round_val_acc = np.array([metric['val_acc'] for metric in lst_global_metrics]).mean()
-
-            run.log({"Train Loss": round_train_loss})
-            run.log({"Val Loss": round_val_loss})
-            run.log({"Train Acc": round_train_acc})
-            run.log({"Val Acc": round_val_acc})
-
 
             round_global_metrics = wandb.Table(dataframe=pd.DataFrame(lst_global_metrics))
-            run.log({f"round {t} (GM) Metrics": round_global_metrics})
+
+            run.log({"Train Loss": round_train_loss,
+                     "Val Loss": round_val_loss,
+                     f"round {t} (GM) Metrics": round_global_metrics})
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
+            torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
+            self.config.save_pretrained(output_dir)
+
+
+            
+        train_acc, eval_acc = self.eval_clients(self.client_list)
+        run.log({"Train Accuracy": train_acc,
+                 "Eval Accuracy": eval_acc})
             
         return lst_global_metrics_dfs
     
@@ -203,6 +203,40 @@ class Server_fedit(BaseServer):
 
         return model
 
+    def eval_clients(self, clients_list):
+        clients_metrics = []
+        train_acc = 0
+        eval_acc = 0
+        
+        for client in clients_list:
+            metrics = {}
+            
+            if not client.model:
+                client.model = deepcopy(self.model)
+
+            trainer = Trainer(client)
+
+            client_train_acc = trainer.train_generate()
+            client_eval_acc = trainer.eval_generate()
+
+            task = client.task
+            metrics['task'] = task
+            metrics['train_acc'] = client_train_acc
+            metrics['eval_acc'] = client_eval_acc
+            
+
+            clients_metrics.append(metrics)
+            client.clear_model()
+
+        for client_metric in clients_metrics:
+            train_acc += client_metric['train_acc']
+            eval_acc += client_metric['eval_acc']
+        
+        train_acc /= len(clients_metrics)
+        eval_acc /= len(clients_metrics)
+
+
+        return train_acc, eval_acc
 
     
     
