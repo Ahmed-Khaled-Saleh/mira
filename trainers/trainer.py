@@ -172,6 +172,8 @@ class Trainer:
         def _run_batch(batch):
             print("BATCH:**")
             print(batch)
+            print(self.client.model)
+            print(self.client.model.device)
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
             if torch.isnan(loss):
