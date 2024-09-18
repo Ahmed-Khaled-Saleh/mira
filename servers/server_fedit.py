@@ -150,7 +150,7 @@ class Server_fedit(BaseServer):
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
                                         self.model,
-                                        selected_client,
+                                        client_indices_rounds[t-1],
                                         output_dir,
                                         local_dataset_len_dict,
                                         t,
