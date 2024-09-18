@@ -106,14 +106,14 @@ class Server_fedit(BaseServer):
                     client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
-                # client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             zo_eps= self.args.zo_eps,
-                #                             candidate_seeds= self.candidate_seeds,
-                #                             weight_decay= float(self.args.weight_decay)))
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
                                             lr= float(self.args.lr),
-                                            weight_decay= float(self.args.weight_decay))
+                                            zo_eps= self.args.zo_eps,
+                                            candidate_seeds= self.candidate_seeds,
+                                            weight_decay= float(self.args.weight_decay)))
+                # client.optimizer = AdamW(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             weight_decay= float(self.args.weight_decay))
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
