@@ -3,6 +3,8 @@ __pycache__
 */ckpt
 */logs
 */wandb
+# execlude any file inside wandb folder
+wandb/
 *.pth
 .idea
 *.jpg
