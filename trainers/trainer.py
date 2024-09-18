@@ -153,7 +153,8 @@ class Trainer:
 
             train_loss.append(avg_train_loss)
 
-        self.client.model = None
+        if self.client.args.name in ['fedk']:
+            self.client.model = None
         
         if callbacks:
             callbacks[1](memory_record_dic, self.client.device)
