@@ -90,7 +90,7 @@ class Server_fedit(BaseServer):
         previously_selected_clients_set = set()
         last_client_id = None
         local_dataset_len_dict = dict()
-        output_dir = os.path.join(output_dir, str(num_clients))
+        # output_dir = os.path.join(output_dir, str(num_clients))
 
         
         print("Finished initializing the clients")
