@@ -6,6 +6,7 @@ from copy import deepcopy
 from tqdm import tqdm
 
 import torch
+from torch.optim import AdamW
 from transformers import AutoModelForCausalLM, TrainingArguments, Trainer, DataCollatorForSeq2Seq
 from peft import (
     get_peft_model_state_dict,
@@ -45,13 +46,10 @@ class Server_fedit(BaseServer):
                                                         #   quantization_config=self.quant_config)
 
         self.model_w0 = deepcopy(self.model)
-        # self.model = self.model.to(self.device)
-        # self.model = prepare_model_for_kbit_training(self.model)
         
         self.config = LoraConfig(
                     r=self.args.r,
                     lora_alpha=16,
-                    # target_modules=["c_attn",],
                     lora_dropout=0.05,
                     bias="none",
                     task_type="CAUSAL_LM",
@@ -110,12 +108,14 @@ class Server_fedit(BaseServer):
                     client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
-                client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
+                # client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             zo_eps= self.args.zo_eps,
+                #                             candidate_seeds= self.candidate_seeds,
+                #                             weight_decay= float(self.args.weight_decay)))
+                client.optimizer = AdamW(client.model.parameters(),
                                             lr= float(self.args.lr),
-                                            zo_eps= self.args.zo_eps,
-                                            candidate_seeds= self.candidate_seeds,
-                                            weight_decay= float(self.args.weight_decay)))
-                
+                                            weight_decay= float(self.args.weight_decay))
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step

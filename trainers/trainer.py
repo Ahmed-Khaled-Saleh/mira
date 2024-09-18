@@ -3,6 +3,8 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
+from optimizers.mezo_torch import MeZOOptimizer
+
 class Trainer:
     def __init__(
         self,
@@ -117,7 +119,7 @@ class Trainer:
             return total_loss / num_trained
         
 
-        if self.client.args.name in ['fedk', 'mira', 'fedit']:
+        if isinstance(self.client.optimizer, MeZOOptimizer):
             self.client.model = self.client.model.to(self.client.device)
             self.client.model.eval()
             with torch.inference_mode():
@@ -166,8 +168,8 @@ class Trainer:
         print("****************************************")
         print('Inside the eval () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira', 'fedit']:
-            self.client.model = self.client.model.to(self.client.device)
+        
+        self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         def _run_batch(batch):
@@ -201,8 +203,7 @@ class Trainer:
         print("****************************************")
         print('Inside the train_generate () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira', 'fedit']:
-            self.client.model = self.client.model.to(self.client.device)
+        self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_train = tqdm(range(len(self.client.train_loader_genr)))
@@ -234,8 +235,7 @@ class Trainer:
         print("****************************************")
         print('Inside the eval_generate () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira', 'fedit']:
-            self.client.model = self.client.model.to(self.client.device)
+        self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_eval = tqdm(range(len(self.client.eval_loader_genr)))
