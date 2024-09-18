@@ -50,6 +50,7 @@ class Trainer:
         
         else:
             loss = closure()
+            print(type(loss))
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
                 return torch.tensor(float(0), device=loss.device)
