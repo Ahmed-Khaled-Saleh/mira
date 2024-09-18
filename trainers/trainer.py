@@ -51,6 +51,11 @@ class Trainer:
         else:
             loss = closure()
             print(type(loss))
+            print("Loss value:", loss)
+            print("Loss dtype:", loss.dtype)
+            print("Loss device:", loss.device)
+            print("Loss requires grad:", loss.requires_grad)
+            print("Loss shape:", loss.shape)
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
                 return torch.tensor(float(0), device=loss.device)
