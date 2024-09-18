@@ -85,7 +85,7 @@ class Client_fedit(BaseClient):
 
     def terminate_local_training(self, epoch, local_dataset_len_dict, previously_selected_clients_set):
 
-        local_dataset_len_dict[self.client_id] = len(self.local_train_dataset)
+        local_dataset_len_dict[self.client_id] = len(self.train_ds)
         new_adapter_weight = self.model.state_dict()
         single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(self.client_id))
         os.makedirs(single_output_dir, exist_ok=True)
