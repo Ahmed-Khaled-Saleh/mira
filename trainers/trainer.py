@@ -36,7 +36,7 @@ class Trainer:
                 return torch.tensor(float(0), device=loss.device)
             return loss
         
-        if self.client.args.name in ['fedk', 'mira', 'fedit']:
+        if isinstance(self.client.optimizer, MeZOOptimizer):
             loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
