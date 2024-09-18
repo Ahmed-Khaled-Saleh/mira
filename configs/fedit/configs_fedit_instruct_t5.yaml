@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'google-t5/t5-small'
-  lr: 3e-04
+  lr: 2e-04
   weight_decay: 0.0
   grad_clip: -100.0
   K: 4096
