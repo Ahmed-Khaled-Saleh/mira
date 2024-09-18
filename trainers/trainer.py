@@ -34,7 +34,7 @@ class Trainer:
                 return torch.tensor(float(0), device=loss.device)
             return loss
         
-        if self.client.args.name in ['fedk', 'mira']:
+        if self.client.args.name in ['fedk', 'mira', 'fedit']:
             loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
@@ -165,7 +165,7 @@ class Trainer:
         print("****************************************")
         print('Inside the eval () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira']:
+        if self.client.args.name in ['fedk', 'mira', 'fedit']:
             self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
@@ -204,7 +204,7 @@ class Trainer:
         print("****************************************")
         print('Inside the train_generate () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira']:
+        if self.client.args.name in ['fedk', 'mira', 'fedit']:
             self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
@@ -237,7 +237,7 @@ class Trainer:
         print("****************************************")
         print('Inside the eval_generate () function of client ', self.client.idx)
 
-        if self.client.args.name in ['fedk', 'mira']:
+        if self.client.args.name in ['fedk', 'mira', 'fedit']:
             self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
