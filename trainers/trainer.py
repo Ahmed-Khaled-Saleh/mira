@@ -117,7 +117,7 @@ class Trainer:
             return total_loss / num_trained
         
 
-        if self.client.args.name in ['fedk', 'mira']:
+        if self.client.args.name in ['fedk', 'mira', 'fedit']:
             self.client.model = self.client.model.to(self.client.device)
             self.client.model.eval()
             with torch.inference_mode():
