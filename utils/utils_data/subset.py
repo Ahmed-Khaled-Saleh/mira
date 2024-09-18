@@ -34,5 +34,6 @@ def get_tokenizer(args):
     if tokenizer.unk_token is None:
         special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
     tokenizer.add_special_tokens(special_tokens)
+    tokenizer.pad_token = tokenizer.eos_token
 
     return tokenizer

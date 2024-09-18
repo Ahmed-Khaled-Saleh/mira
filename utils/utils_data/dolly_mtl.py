@@ -32,8 +32,6 @@ def load_jsonl(file_path,
     return list_data_dict
 
 
-
-
 class DefaultToken(Enum):
     PAD_TOKEN = "[PAD]"
     EOS_TOKEN = "</s>"

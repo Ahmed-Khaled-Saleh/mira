@@ -213,8 +213,10 @@ class Trainer:
             for batch in self.client.train_loader_genr:
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
+                attention_mask=batch['attention_mask'].to(self.client.device)
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
+                    attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
                 )
@@ -246,8 +248,10 @@ class Trainer:
             for batch in self.client.eval_loader_genr:
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
+                attention_mask=batch['attention_mask'].to(self.client.device)
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
+                    attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
                 )

@@ -59,4 +59,3 @@ def get_datasets(args, only_eval=False):
         return (lst_train_ds, lst_eval_set, tokenizer, data_collator), (lst_train_ds_genr, lst_eval_set_genr)
     else:
         raise AttributeError(f'dataset {args.dataset} not implemented')
-    return list_train_loader, eval_loader, tokenizer
