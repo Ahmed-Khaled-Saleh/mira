@@ -140,7 +140,9 @@ class Server_fedit(BaseServer):
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
                 client.clear_model()
-                del client.optimizer
+                del trainer
+                del client
+
                 torch.cuda.empty_cache()
 
             print("Collecting the weights of clients and performing aggregation")
