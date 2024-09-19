@@ -39,13 +39,15 @@ class Server_fedit(BaseServer):
 
         )
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                          torch_dtype=torch.float16,
+                                                        #   torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='auto',
+                                                          quantization_config=self.quant_config,
                                                           token=self.args.hf_secret)
 
         # self.model_w0 = deepcopy(self.model)
-        
+        self.model = prepare_model_for_kbit_training(self.model)
+
         self.config = LoraConfig(
                     r=self.args.r,
                     target_modules=['q_proj'],
