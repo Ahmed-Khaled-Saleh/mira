@@ -29,6 +29,7 @@ class Server_fedk(BaseServer):
 
         else:
             self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', torch_dtype=torch.float16, trust_remote_code=True)
+            self.model.resize_token_embeddings(len(self.tokenizer))
 
         self.model_w0 = deepcopy(self.model)
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}

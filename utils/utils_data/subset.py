@@ -37,5 +37,6 @@ def get_tokenizer(args):
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.model_max_length = args.max_length
     tokenizer.add_special_tokens(special_tokens)
+    
 
     return tokenizer
