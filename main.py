@@ -33,10 +33,12 @@ def federated_training(server,
 
 def process_main(args_config_fname):
     fname = args_config_fname.fname
+    hf_secret = args_config_fname.hf_secret
     config = load_config(fname)
     experiment = config[0]  # Assuming single experiment per config file
 
     args = argparse.Namespace(**experiment)
+    args.hf_secret = hf_secret
     run = wandb.init(project=args.project, name= args.name, config=args)
     client_indices_rounds = get_client_indices_rounds(args)
     print("client indices rounds generated", client_indices_rounds)
@@ -113,6 +115,7 @@ if __name__ == '__main__':
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     load_dotenv()
     key = os.getenv("WANDB_API_KEY")
+    hf_secret = os.getenv("HF_SECRET_CODE")
     wandb.login(key=key, verify=False)
 
     parser = argparse.ArgumentParser()
@@ -126,6 +129,9 @@ if __name__ == '__main__':
                         help='number of GPUs per node')
     parser.add_argument('--nodes', default=1, type=int,
                         help='number of nodes')
+    parser.add_argument('hf_secret', type=str,
+                        help='huggingface secret key',
+                        default=hf_secret)
     
     args_config_fname = parser.parse_args()
     process_main(args_config_fname)
