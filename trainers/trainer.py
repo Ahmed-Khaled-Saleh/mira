@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm import tqdm
-from utils.validation import rouge_score, acc_score
+from utils.validation import rouge_score
 from optimizers.mezo_torch import MeZOOptimizer
 
 class Trainer:
