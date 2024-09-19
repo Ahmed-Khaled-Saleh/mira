@@ -60,7 +60,7 @@ class MeZOOptimizer(Optimizer):
 
         # Restore original parameters
         self._restore_parameters(orig_params)
-
+        del orig_params
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
             print("Warning: NaN loss detected in optimizer step")
             return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
