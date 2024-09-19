@@ -114,8 +114,9 @@ class Trainer:
                 progress_bar.update(1)
                 progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {r}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
 
-                total_loss += loss.item()
+                
                 if loss.item() != 0:
+                    total_loss += loss.item()
                     num_trained += len(batch['input_ids'])
 
             return total_loss / num_trained
