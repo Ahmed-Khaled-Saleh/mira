@@ -104,8 +104,7 @@ class MeZOOptimizer(Optimizer):
                 
                 torch.manual_seed(seed)
                 gen = torch.Generator()
-                z = torch.empty()
-                z.resize_(p.size())
+                z = torch.empty(p.size())
                 z.normal_(mean=0, std=1, generator=gen)
                 # z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
                 
@@ -122,8 +121,7 @@ class MeZOOptimizer(Optimizer):
             for p in group['params']:
                 torch.manual_seed(self.zo_random_seed)
                 gen = torch.Generator()
-                z = torch.empty()
-                z.resize_(p.size())
+                z = torch.empty(p.size())
                 z.normal_(mean=0, std=1, generator=gen)
                 p.add_(scaling_factor * zo_eps * z)
 
