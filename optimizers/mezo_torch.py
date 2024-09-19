@@ -41,26 +41,29 @@ class MeZOOptimizer(Optimizer):
         self.zo_random_seed = np.random.choice(self.candidate_seeds, 1)[0]
         self.zo_eps = self.get_zoeps()
 
-        orig_params = {}
-        for group in self.param_groups:
-            for p in group['params']:
-                orig_params[p] = p.clone()
+        # orig_params = {}
+        # for group in self.param_groups:
+        #     for p in group['params']:
+        #         orig_params[p] = p.clone()
 
         # Positive perturbation
         self._perturb_parameters(scaling_factor=1)
         loss_pos = closure()
         print(f"loss_pos shape: {loss_pos.shape if hasattr(loss_pos, 'shape') else 'scalar'}")
 
-        # Restore original parameters
-        self._restore_parameters(orig_params)
-
+        
+        # self._restore_parameters(orig_params)
         # Negative perturbation
-        self._perturb_parameters(scaling_factor=-1)
+        self._perturb_parameters(scaling_factor=-2)
         loss_neg = closure()
 
         # Restore original parameters
-        self._restore_parameters(orig_params)
-        del orig_params
+        self._perturb_parameters(scaling_factor=1)
+        
+
+        # Restore original parameters
+        # self._restore_parameters(orig_params)
+        # del orig_params
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
             print("Warning: NaN loss detected in optimizer step")
             return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
@@ -100,7 +103,11 @@ class MeZOOptimizer(Optimizer):
                 torch.nn.utils.clip_grad_norm_(p, max_norm=1.0)
                 
                 torch.manual_seed(seed)
-                z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
+                gen = torch.Generator()
+                z = torch.empty()
+                z.resize_(p.size())
+                z.normal_(mean=0, std=1, generator=gen)
+                # z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
                 
                 p.grad.copy_(grad.to(p.device) * z.to(p.device))
 
@@ -114,7 +121,10 @@ class MeZOOptimizer(Optimizer):
             zo_eps = group['zo_eps']
             for p in group['params']:
                 torch.manual_seed(self.zo_random_seed)
-                z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
+                gen = torch.Generator()
+                z = torch.empty()
+                z.resize_(p.size())
+                z.normal_(mean=0, std=1, generator=gen)
                 p.add_(scaling_factor * zo_eps * z)
 
     def _restore_parameters(self, orig_params):
