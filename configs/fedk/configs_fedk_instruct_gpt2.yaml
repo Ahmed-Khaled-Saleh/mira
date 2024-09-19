@@ -1,6 +1,6 @@
 - name: 'fedk'
   num_clients: 200
-  num_clients_per_task: 10
+  num_clients_per_task: 25
   m: 0.05
   rounds: 40
   local_step: 50
