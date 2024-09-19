@@ -129,7 +129,7 @@ if __name__ == '__main__':
                         help='number of GPUs per node')
     parser.add_argument('--nodes', default=1, type=int,
                         help='number of nodes')
-    parser.add_argument('hf_secret', type=str,
+    parser.add_argument('--hf_secret', type=str,
                         help='huggingface secret key',
                         default=hf_secret)
     
