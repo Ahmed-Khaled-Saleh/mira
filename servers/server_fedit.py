@@ -43,7 +43,7 @@ class Server_fedit(BaseServer):
                                                           device_map='auto',
                                                           token=self.args.hf_secret)
 
-        self.model_w0 = deepcopy(self.model)
+        # self.model_w0 = deepcopy(self.model)
         
         self.config = LoraConfig(
                     r=self.args.r,
