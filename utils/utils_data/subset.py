@@ -23,10 +23,11 @@ def subset(args, raw_datasets):
 def get_tokenizer(args):
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+    tokenizer.model_max_length = args.max_length
     if args.model in ['openai-community/gpt2']:
         tokenizer.pad_token = tokenizer.eos_token
         return tokenizer
-    tokenizer.model_max_length = args.max_length
+
     special_tokens = dict()
     if tokenizer.pad_token is None:
         special_tokens["pad_token"] = DefaultToken.PAD_TOKEN.value
@@ -37,6 +38,5 @@ def get_tokenizer(args):
     if tokenizer.unk_token is None:
         special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
     tokenizer.add_special_tokens(special_tokens)
-    tokenizer.pad_token = tokenizer.eos_token
 
     return tokenizer
