@@ -134,9 +134,7 @@ class Server_fedit(BaseServer):
 
                 lst_global_metrics.append(metrics)
                 
-
-
-                self.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
+                client.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
                     client.terminate_local_training(t, 
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
