@@ -94,26 +94,28 @@ class MeZOOptimizer(Optimizer):
             # self._add_seed_pole(local_seed_pool, zo_eps)
 
             for p in group['params']:
-                if p.grad is None:
-                    p.grad = torch.zeros_like(p)
-                d_p = p.grad
-                if torch.isnan(d_p).any():
-                    print(f"Warning: NaN gradient detected for parameter {p}")
-                    d_p = torch.zeros_like(d_p)
+                # if p.grad is None:
+                #     p.grad = torch.zeros_like(p)
+                # d_p = p.grad
+                # if torch.isnan(d_p).any():
+                #     print(f"Warning: NaN gradient detected for parameter {p}")
+                    # d_p = torch.zeros_like(d_p)
                 torch.nn.utils.clip_grad_norm_(p, max_norm=1.0)
                 
                 torch.manual_seed(seed)
+                scalar = lr * grad
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
                 z.normal_(mean=0, std=1, generator=gen)
                 # z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
                 
-                p.grad.copy_(grad.to(p.device) * z.to(p.device))
+                
 
                 if weight_decay != 0:
-                    p.grad.add_(weight_decay, p)
-                
-                p.add_(p.grad, alpha=-lr)
+                    p.data.add_(weight_decay, p)
+                    
+                p.data.add_(z, alpha=-scalar)
+                # p.add_(p.grad, alpha=-lr)
 
     def _perturb_parameters(self, scaling_factor):
         for group in self.param_groups:
