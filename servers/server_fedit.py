@@ -104,14 +104,14 @@ class Server_fedit(BaseServer):
                 print("Client ", client.idx, " is training")
 
                 if not client.model:
-                    client.model = deepcopy(self.model)
+                    client.model = self.model
                 
                 client.initiate_local_training()
-                client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
+                client.optimizer = MeZOOptimizer(client.model.parameters(),
                                             lr= float(self.args.lr),
                                             zo_eps= self.args.zo_eps,
                                             candidate_seeds= self.candidate_seeds,
-                                            weight_decay= float(self.args.weight_decay)))
+                                            weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
             
