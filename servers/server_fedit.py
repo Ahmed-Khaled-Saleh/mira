@@ -39,6 +39,7 @@ class Server_fedit(BaseServer):
 
         )
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
+                                                          dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='auto',
                                                           token=self.args.hf_secret)
