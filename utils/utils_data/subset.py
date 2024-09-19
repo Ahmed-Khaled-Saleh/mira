@@ -23,6 +23,9 @@ def subset(args, raw_datasets):
 def get_tokenizer(args):
 
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True)
+    if args.model in ['openai-community/gpt2']:
+        tokenizer.pad_token = tokenizer.eos_token
+        return tokenizer
     tokenizer.model_max_length = args.max_length
     special_tokens = dict()
     if tokenizer.pad_token is None:
