@@ -109,13 +109,14 @@ class MeZOOptimizer(Optimizer):
                 z.normal_(mean=0, std=1, generator=gen)
                 # z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
                 
-                
-
                 if weight_decay != 0:
                     p.data.add_(weight_decay, p)
-                    
+
                 p.data.add_(z, alpha=-scalar)
                 # p.add_(p.grad, alpha=-lr)
+
+        del z
+
 
     def _perturb_parameters(self, scaling_factor):
         for group in self.param_groups:
@@ -126,6 +127,7 @@ class MeZOOptimizer(Optimizer):
                 z = torch.empty(p.shape).to(p.device)
                 z.normal_(mean=0, std=1, generator=gen)
                 p.add_(scaling_factor * zo_eps * z)
+        del z
 
     def _restore_parameters(self, orig_params):
         for group in self.param_groups:
