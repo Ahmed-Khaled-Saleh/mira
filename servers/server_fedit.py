@@ -50,7 +50,7 @@ class Server_fedit(BaseServer):
 
         self.config = LoraConfig(
                     r=self.args.r,
-                    target_modules=['q_proj'],
+                    target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj'],
                     lora_alpha=16,
                     lora_dropout=0.05,
                     bias="none",
@@ -58,6 +58,7 @@ class Server_fedit(BaseServer):
                 )
         
         self.model = get_peft_model(self.model, self.config)
+        self.model = self.model.to(torch.float16)
         self.model.resize_token_embeddings(len(self.tokenizer))
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
@@ -142,11 +143,15 @@ class Server_fedit(BaseServer):
                     client.terminate_local_training(t, 
                                                     local_dataset_len_dict,
                                                     previously_selected_clients_set)
+                
                 client.clear_model()
                 del trainer
                 del client
-
+                import gc
+                gc.collect()
                 torch.cuda.empty_cache()
+                
+
 
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
