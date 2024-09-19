@@ -39,11 +39,9 @@ class Server_fedit(BaseServer):
 
         )
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                          torch_dtype=torch.float16,
                                                           trust_remote_code=True,
-                                                        #   device_map={'':0},
-                                                           device_map='auto')
-                                                        #   quantization_config=self.quant_config)
+                                                          device_map='auto',
+                                                          token=self.args.hf_secret)
 
         self.model_w0 = deepcopy(self.model)
         
@@ -56,6 +54,7 @@ class Server_fedit(BaseServer):
                 )
         
         self.model = get_peft_model(self.model, self.config)
+        self.model.resize_token_embeddings(len(self.tokenizer))
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
@@ -111,9 +110,7 @@ class Server_fedit(BaseServer):
                                             zo_eps= self.args.zo_eps,
                                             candidate_seeds= self.candidate_seeds,
                                             weight_decay= float(self.args.weight_decay)))
-                # client.optimizer = AdamW(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             weight_decay= float(self.args.weight_decay))
+                
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
@@ -178,9 +175,6 @@ class Server_fedit(BaseServer):
         return lst_global_metrics_dfs
     
     
-
-
-
     def aggregate(self, model, selected_clients_set, output_dir, local_dataset_len_dict, epoch):
         weights_array = normalize(
             torch.tensor([local_dataset_len_dict[client_id] for client_id in selected_clients_set],

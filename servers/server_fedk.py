@@ -7,6 +7,15 @@ from copy import deepcopy
 from tqdm import tqdm
 import torch
 from transformers import AutoModelForCausalLM
+from peft import (
+    get_peft_model_state_dict,
+    set_peft_model_state_dict,
+)
+from peft import (
+    LoraConfig,
+    get_peft_model,
+)
+
 import wandb
 from utils.validation import *  # noqa: F403
 from utils.helper_fuctions import *  # noqa: F403
@@ -22,22 +31,31 @@ class Server_fedk(BaseServer):
         self.candidate_seeds = candidate_seeds
         self.tokenizer = tokenizer
         self.log_dir = log_dir
+    
+        self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
+                                                          trust_remote_code=True,
+                                                          device_map='auto',
+                                                          token=self.args.hf_secret)
         
-        if self.args.model == 'google-t5/t5-small':
-            from transformers import T5ForConditionalGeneration, T5Tokenizer
-            self.model = T5ForConditionalGeneration.from_pretrained("t5-small")
-
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(args.model, device_map='cpu', torch_dtype=torch.float16, trust_remote_code=True)
-            self.model.resize_token_embeddings(len(self.tokenizer))
+        self.model.resize_token_embeddings(len(self.tokenizer))
 
         self.model_w0 = deepcopy(self.model)
+        self.config = LoraConfig(
+                    r=self.args.r,
+                    lora_alpha=16,
+                    lora_dropout=0.05,
+                    bias="none",
+                    task_type="CAUSAL_LM",
+                )
+        
+        self.model = get_peft_model(self.model, self.config)
+        self.model.resize_token_embeddings(len(self.tokenizer))
+
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
 
         if self.args.bias_sampling:
-            # initialize the probabilities of seeds
             self.gradient_history = {seed: [self.args.grad_initial] for seed in self.candidate_seeds}
             self.probabilities = [1.0 / float(len(self.candidate_seeds)) for _ in range(len(self.candidate_seeds))]
         else:

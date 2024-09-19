@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 from tqdm import tqdm
-from utils.validation import rouge_score
+from utils.validation import rouge_score, acc_score
 from optimizers.mezo_torch import MeZOOptimizer
 
 class Trainer:
@@ -50,12 +50,6 @@ class Trainer:
         
         else:
             loss = closure()
-            print(type(loss))
-            print("Loss value:", loss)
-            print("Loss dtype:", loss.dtype)
-            print("Loss device:", loss.device)
-            print("Loss requires grad:", loss.requires_grad)
-            print("Loss shape:", loss.shape)
             if loss.item() == 0:
                 return loss
             loss.backward()
@@ -219,16 +213,21 @@ class Trainer:
         num_train = 0
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
+                
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
+
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
                     attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
                 )
-                acc_total_train += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)
+                hyp_ids = output_ids[0][len(input_ids[0]):]
+                ref_ids = label_ids[0]
+
+                acc_total_train += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)
                 
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / len(batch['input_ids'])}")
                 progress_bar_train.update(1)
@@ -264,7 +263,11 @@ class Trainer:
                     num_beams=1,
                 )
 
-                acc_total_eval += rouge_score(output_ids[0][len(input_ids[0]):], label_ids[0], self.client.tokenizer)  # noqa: F405
+                hyp_ids = output_ids[0][len(input_ids[0]):]
+                ref_ids = label_ids[0]
+
+                acc_total_train += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / len(batch['input_ids'])}")
                 progress_bar_eval.update(1)
                 num_eval += len(batch['input_ids'])
@@ -279,7 +282,6 @@ class Trainer:
         return DataLoader(
             dataset,
             batch_size=batch_size,
-            # pin_memory=True,
             shuffle=True,
             collate_fn=data_collator        
         )

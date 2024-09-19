@@ -20,6 +20,6 @@ def rouge_score(hyp_ids, ref_ids, tokenizer):
 
 
 def acc_score(preds, labels):
-    preds = np.array(preds)
-    labels = np.array(labels)
+    preds = np.array(preds.cpu())
+    labels = np.array(labels.cpu())
     return np.sum(preds == labels) / float(len(labels))

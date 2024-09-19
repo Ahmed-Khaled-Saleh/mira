@@ -13,8 +13,8 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'openai-community/gpt2'
-  lr: 2e-07
+  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
+  lr: 3e-04
   weight_decay: 1e-06
   grad_clip: -100.0
   K: 4096
@@ -29,4 +29,4 @@
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'MIRA'
+  project: 'MIRALora'
