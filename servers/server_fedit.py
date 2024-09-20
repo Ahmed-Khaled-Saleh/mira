@@ -12,6 +12,7 @@ from peft import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
+import bitsandbytes as bnb
 from peft import (
     LoraConfig,
     get_peft_model,
@@ -110,12 +111,16 @@ class Server_fedit(BaseServer):
                     client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
-                client.optimizer = MeZOOptimizer(client.model.parameters(),
-                                            lr= float(self.args.lr),
-                                            zo_eps= self.args.zo_eps,
-                                            candidate_seeds= self.candidate_seeds,
-                                            weight_decay= float(self.args.weight_decay))
-                
+                # client.optimizer = MeZOOptimizer(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             zo_eps= self.args.zo_eps,
+                #                             candidate_seeds= self.candidate_seeds,
+                #                             weight_decay= float(self.args.weight_decay))
+                client.optimizer = bnb.opt.Adam8bit(client.model.parameters(),
+                                                lr= float(self.args.lr),
+                                                betas=(0.9, 0.995), 
+                                                optim_bits=32, 
+                                                percentile_clipping=5)
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
