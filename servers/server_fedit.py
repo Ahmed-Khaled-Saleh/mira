@@ -108,10 +108,11 @@ class Server_fedit(BaseServer):
                 print("Client ", client.idx, " is training")
 
                 if not client.model:
-                    client.model = deepcopy(self.model)
-                
+                    client.model = deepcopy(self.model.to(self.device)).to(self.device)
+                    self.model = self.model.to('cpu')
+
                 client.initiate_local_training()
-                self.model.to('cpu')
+                
                 # client.optimizer = MeZOOptimizer(client.model.parameters(),
                 #                             lr= float(self.args.lr),
                 #                             zo_eps= self.args.zo_eps,
@@ -152,6 +153,7 @@ class Server_fedit(BaseServer):
                 
                 client.clear_model()
                 del trainer
+                del client.optimizer
                 del client
                 import gc
                 gc.collect()
@@ -160,8 +162,9 @@ class Server_fedit(BaseServer):
 
 
             print("Collecting the weights of clients and performing aggregation")
+            self.model = self.model.to(self.device)
             self.model = self.aggregate(
-                                        self.model.to(self.device),
+                                        self.model,
                                         client_indices_rounds[t-1],
                                         output_dir,
                                         local_dataset_len_dict,
