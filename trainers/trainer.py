@@ -53,6 +53,7 @@ class Trainer:
             if loss.item() == 0:
                 return loss
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), max_norm=1.0)
             self.client.optimizer.step()
         
         return loss
