@@ -106,7 +106,7 @@ class MeZOOptimizer(Optimizer):
                 scalar = lr * grad
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
-                z.normal_(mean=0, std=1, generator=gen)
+                z.normal_(mean=0, std=1, generator=gen, dtype=p.dtype)
                 # z = torch.normal(mean=0, std=1, size=p.shape, device=p.device, dtype=p.dtype)
                 
                 if weight_decay != 0:
@@ -125,7 +125,7 @@ class MeZOOptimizer(Optimizer):
                 torch.manual_seed(self.zo_random_seed)
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
-                z.normal_(mean=0, std=1, generator=gen)
+                z.normal_(mean=0, std=1, generator=gen, dtype=p.dtype)
                 print(p.device, p.dtype)
                 print(z.device, z.dtype)
                 p.add_(scaling_factor * zo_eps * z)
