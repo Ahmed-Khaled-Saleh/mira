@@ -43,11 +43,7 @@ class Server_fedit(BaseServer):
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='cpu',
-                                                        #   quantization_config=self.quant_config,
                                                           token=self.args.hf_secret)
-
-        # self.model_w0 = deepcopy(self.model)
-        # self.model = prepare_model_for_kbit_training(self.model)
 
         self.config = LoraConfig(
                     r=self.args.r,
@@ -59,8 +55,8 @@ class Server_fedit(BaseServer):
                 )
         
         self.model = get_peft_model(self.model, self.config)
-        # self.model = self.model.to(torch.float16)
         self.model.resize_token_embeddings(len(self.tokenizer))
+
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
@@ -170,8 +166,7 @@ class Server_fedit(BaseServer):
                                         local_dataset_len_dict,
                                         t,
                                         )
-            print(self.model)
-            
+                        
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
 

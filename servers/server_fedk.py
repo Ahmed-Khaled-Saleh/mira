@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from tqdm import tqdm
 import torch
+from torch.optim import Adam
 from transformers import AutoModelForCausalLM
 from peft import (
     get_peft_model_state_dict,
@@ -33,15 +34,14 @@ class Server_fedk(BaseServer):
         self.log_dir = log_dir
     
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
+                                                          torch_dtype=torch.float16,
                                                           trust_remote_code=True,
-                                                          device_map='auto',
+                                                          device_map='cpu',
                                                           token=self.args.hf_secret)
-        
-        self.model.resize_token_embeddings(len(self.tokenizer))
 
-        self.model_w0 = deepcopy(self.model)
         self.config = LoraConfig(
                     r=self.args.r,
+                    target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj'],
                     lora_alpha=16,
                     lora_dropout=0.05,
                     bias="none",
@@ -50,6 +50,8 @@ class Server_fedk(BaseServer):
         
         self.model = get_peft_model(self.model, self.config)
         self.model.resize_token_embeddings(len(self.tokenizer))
+
+        self.model_w0 = deepcopy(self.model)
 
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
@@ -90,13 +92,18 @@ class Server_fedk(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                if not client.model:
+                with torch.no_grad():
                     client.model = deepcopy(self.model)
-                    client.optimizer = deepcopy(MeZOOptimizer(client.model.parameters(),
-                                                lr= float(self.args.lr),
-                                                zo_eps= self.args.zo_eps,
-                                                candidate_seeds= self.candidate_seeds,
-                                                weight_decay= float(self.args.weight_decay))) 
+                client.model = client.model.to(self.device)
+                
+                # client.optimizer = MeZOOptimizer(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             zo_eps= self.args.zo_eps,
+                #                             candidate_seeds= self.candidate_seeds,
+                #                             weight_decay= float(self.args.weight_decay))
+                client.optimizer = Adam(client.model.parameters(), 
+                                        lr= float(self.args.lr),
+                                        weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
             
@@ -121,8 +128,14 @@ class Server_fedk(BaseServer):
                 print(f"Round Sats for client {client.idx}: {metrics}")
 
                 lst_global_metrics.append(metrics)
+                
                 client.clear_model()
+                del trainer
                 del client.optimizer
+                del client
+                import gc
+                gc.collect()
+                torch.cuda.empty_cache()
                 
 
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
