@@ -126,6 +126,8 @@ class MeZOOptimizer(Optimizer):
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
                 z.normal_(mean=0, std=1, generator=gen)
+                print(p.device, p.dtype)
+                print(z.device, z.dtype)
                 p.add_(scaling_factor * zo_eps * z)
         del z
 
