@@ -113,16 +113,16 @@ class Server_fedit(BaseServer):
 
                 client.initiate_local_training()
                 
-                # client.optimizer = MeZOOptimizer(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             zo_eps= self.args.zo_eps,
-                #                             candidate_seeds= self.candidate_seeds,
-                #                             weight_decay= float(self.args.weight_decay))
-                client.optimizer = bnb.optim.Adam8bit(client.model.parameters(),
-                                                lr= float(self.args.lr),
-                                                betas=(0.9, 0.995), 
-                                                optim_bits=8, 
-                                                percentile_clipping=5)
+                client.optimizer = MeZOOptimizer(client.model.parameters(),
+                                            lr= float(self.args.lr),
+                                            zo_eps= self.args.zo_eps,
+                                            candidate_seeds= self.candidate_seeds,
+                                            weight_decay= float(self.args.weight_decay))
+                # client.optimizer = bnb.optim.Adam8bit(client.model.parameters(),
+                #                                 lr= float(self.args.lr),
+                #                                 betas=(0.9, 0.995), 
+                #                                 optim_bits=8, 
+                #                                 percentile_clipping=5)
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
