@@ -120,7 +120,7 @@ class Server_fedit(BaseServer):
                 client.optimizer = bnb.optim.Adam8bit(client.model.parameters(),
                                                 lr= float(self.args.lr),
                                                 betas=(0.9, 0.995), 
-                                                optim_bits=32, 
+                                                optim_bits=8, 
                                                 percentile_clipping=5)
                 trainer = Trainer(client)
             
