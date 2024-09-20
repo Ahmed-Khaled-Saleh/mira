@@ -107,9 +107,8 @@ class Server_fedit(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                if not client.model:
-                    client.model = deepcopy(self.model.to(self.device)).to(self.device)
-                    self.model = self.model.to('cpu')
+                client.model = deepcopy(self.model.to(self.device)).to(self.device)
+                self.model = self.model.to('cpu')
 
                 client.initiate_local_training()
                 
