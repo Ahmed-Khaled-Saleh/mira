@@ -47,7 +47,7 @@ class Server_fedit(BaseServer):
                                                           token=self.args.hf_secret)
 
         # self.model_w0 = deepcopy(self.model)
-        self.model = prepare_model_for_kbit_training(self.model)
+        # self.model = prepare_model_for_kbit_training(self.model)
 
         self.config = LoraConfig(
                     r=self.args.r,
