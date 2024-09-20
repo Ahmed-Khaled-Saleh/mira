@@ -116,7 +116,7 @@ class Server_fedit(BaseServer):
                 #                             zo_eps= self.args.zo_eps,
                 #                             candidate_seeds= self.candidate_seeds,
                 #                             weight_decay= float(self.args.weight_decay))
-                client.optimizer = bnb.opt.Adam8bit(client.model.parameters(),
+                client.optimizer = bnb.optim.Adam8bit(client.model.parameters(),
                                                 lr= float(self.args.lr),
                                                 betas=(0.9, 0.995), 
                                                 optim_bits=32, 
