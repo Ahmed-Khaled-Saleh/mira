@@ -52,7 +52,7 @@ class Server_fedit(BaseServer):
         self.config = LoraConfig(
                     r=self.args.r,
                     target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj'],
-                    lora_alpha=16,
+                    lora_alpha=8,
                     lora_dropout=0.05,
                     bias="none",
                     task_type="CAUSAL_LM",
@@ -111,6 +111,7 @@ class Server_fedit(BaseServer):
                     client.model = deepcopy(self.model)
                 
                 client.initiate_local_training()
+                self.model.to('cpu')
                 # client.optimizer = MeZOOptimizer(client.model.parameters(),
                 #                             lr= float(self.args.lr),
                 #                             zo_eps= self.args.zo_eps,
@@ -160,7 +161,7 @@ class Server_fedit(BaseServer):
 
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.aggregate(
-                                        self.model,
+                                        self.model.to(self.device),
                                         client_indices_rounds[t-1],
                                         output_dir,
                                         local_dataset_len_dict,
