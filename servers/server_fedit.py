@@ -12,6 +12,7 @@ from peft import (
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
+from torch.optim import Adam
 import bitsandbytes as bnb
 from peft import (
     LoraConfig,
@@ -109,16 +110,15 @@ class Server_fedit(BaseServer):
 
                 client.initiate_local_training()
                 
-                client.optimizer = MeZOOptimizer(client.model.parameters(),
-                                            lr= float(self.args.lr),
-                                            zo_eps= self.args.zo_eps,
-                                            candidate_seeds= self.candidate_seeds,
-                                            weight_decay= float(self.args.weight_decay))
-                # client.optimizer = bnb.optim.Adam8bit(client.model.parameters(),
-                #                                 lr= float(self.args.lr),
-                #                                 betas=(0.9, 0.995), 
-                #                                 optim_bits=8, 
-                #                                 percentile_clipping=5)
+                # client.optimizer = MeZOOptimizer(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             zo_eps= self.args.zo_eps,
+                #                             candidate_seeds= self.candidate_seeds,
+                #                             weight_decay= float(self.args.weight_decay))
+                client.optimizer = Adam(client.model.parameters(), 
+                                        lr= float(self.args.lr),
+                                        weight_decay= float(self.args.weight_decay))
+                
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
@@ -155,8 +155,6 @@ class Server_fedit(BaseServer):
                 gc.collect()
                 torch.cuda.empty_cache()
                 
-
-
             print("Collecting the weights of clients and performing aggregation")
             self.model = self.model.to(self.device)
             self.model = self.aggregate(
