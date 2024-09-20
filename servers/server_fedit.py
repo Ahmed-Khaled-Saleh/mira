@@ -169,6 +169,7 @@ class Server_fedit(BaseServer):
                                         local_dataset_len_dict,
                                         t,
                                         )
+            print(self.model)
             
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
