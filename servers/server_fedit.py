@@ -40,10 +40,10 @@ class Server_fedit(BaseServer):
 
         )
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                        #   torch_dtype=torch.float16,
+                                                          torch_dtype=torch.float16,
                                                           trust_remote_code=True,
-                                                          device_map='auto',
-                                                          quantization_config=self.quant_config,
+                                                          device_map='cpu',
+                                                        #   quantization_config=self.quant_config,
                                                           token=self.args.hf_secret)
 
         # self.model_w0 = deepcopy(self.model)
@@ -59,7 +59,7 @@ class Server_fedit(BaseServer):
                 )
         
         self.model = get_peft_model(self.model, self.config)
-        self.model = self.model.to(torch.float16)
+        # self.model = self.model.to(torch.float16)
         self.model.resize_token_embeddings(len(self.tokenizer))
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
@@ -107,8 +107,9 @@ class Server_fedit(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                client.model = deepcopy(self.model.to(self.device)).to(self.device)
-                self.model = self.model.to('cpu')
+                with torch.no_grad():
+                    client.model = deepcopy(self.model)
+                client.model = client.model.to(self.device)
 
                 client.initiate_local_training()
                 
