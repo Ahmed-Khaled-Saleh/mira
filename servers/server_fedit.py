@@ -179,7 +179,7 @@ class Server_fedit(BaseServer):
             torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
             self.config.save_pretrained(output_dir)
             
-            for client in self.selected_client:
+            for client in selected_client:
                 to_del = os.path.join(output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 if os.path.exists(to_del):
