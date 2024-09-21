@@ -81,6 +81,8 @@ class MeZOOptimizer(Optimizer):
             weight_decay = group['weight_decay']
             
             for p in group['params']:
+                if not p.requires_grad:
+                    continue
                 
                 torch.nn.utils.clip_grad_norm_(p, max_norm=1.0)
                 torch.manual_seed(seed)
