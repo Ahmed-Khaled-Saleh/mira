@@ -56,7 +56,11 @@ class MeZOOptimizer(Optimizer):
         if torch.isnan(loss_pos) or torch.isnan(loss_neg):
             print("Warning: NaN loss detected in optimizer step")
             return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
-    
+
+        if self.args.grad_clip > 0.0:
+            if torch.abs(loss_pos - loss_neg) > self.args.grad_clip:
+                return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
+            
         self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
     
         if torch.isnan(self.projected_grad).any():
@@ -75,6 +79,7 @@ class MeZOOptimizer(Optimizer):
         if grad is None:
             grad = self.projected_grad
 
+        torch.manual_seed(seed)
         for group in self.param_groups:
             lr = group['lr']
             zo_eps = group['zo_eps']
@@ -85,7 +90,6 @@ class MeZOOptimizer(Optimizer):
                     continue
                 
                 torch.nn.utils.clip_grad_norm_(p, max_norm=1.0)
-                torch.manual_seed(seed)
                 scalar = lr * grad
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
@@ -100,10 +104,13 @@ class MeZOOptimizer(Optimizer):
 
 
     def _perturb_parameters(self, scaling_factor):
+        torch.manual_seed(self.zo_random_seed)
+
         for group in self.param_groups:
             zo_eps = group['zo_eps']
             for p in group['params']:
-                torch.manual_seed(self.zo_random_seed)
+                if not p.requires_grad:
+                    continue
                 gen = torch.Generator(device= p.device)
                 z = torch.empty(p.shape).to(p.device)
                 z = z.normal_(mean=0, std=1, generator=gen).to(p.dtype)
