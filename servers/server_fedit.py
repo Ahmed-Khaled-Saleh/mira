@@ -110,14 +110,14 @@ class Server_fedit(BaseServer):
 
                 client.initiate_local_training()
                 
-                # client.optimizer = MeZOOptimizer(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             zo_eps= self.args.zo_eps,
-                #                             candidate_seeds= self.candidate_seeds,
-                #                             weight_decay= float(self.args.weight_decay))
-                client.optimizer = Adam(client.model.parameters(), 
-                                        lr= float(self.args.lr),
-                                        weight_decay= float(self.args.weight_decay))
+                client.optimizer = MeZOOptimizer(client.model.parameters(),
+                                            lr= float(self.args.lr),
+                                            zo_eps= self.args.zo_eps,
+                                            candidate_seeds= self.candidate_seeds,
+                                            weight_decay= float(self.args.weight_decay))
+                # client.optimizer = Adam(client.model.parameters(), 
+                #                         lr= float(self.args.lr),
+                #                         weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
             
