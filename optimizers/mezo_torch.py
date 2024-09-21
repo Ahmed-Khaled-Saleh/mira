@@ -57,9 +57,9 @@ class MeZOOptimizer(Optimizer):
             print("Warning: NaN loss detected in optimizer step")
             return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
 
-        if self.args.grad_clip > 0.0:
-            if torch.abs(loss_pos - loss_neg) > self.args.grad_clip:
-                return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
+        # if self.args.grad_clip > 0.0:
+        #     if torch.abs(loss_pos - loss_neg) > self.args.grad_clip:
+        #         return loss_pos, self.zo_random_seed, torch.zeros_like(self.projected_grad)
             
         self.projected_grad = (loss_pos - loss_neg) / (2 * self.zo_eps)
     
