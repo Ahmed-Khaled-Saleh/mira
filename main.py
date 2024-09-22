@@ -19,7 +19,7 @@ from utils.helper_fuctions import (setup_seed,
                                    get_client_list,
                                    get_client_indices_rounds
                                    )
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 def federated_training(server,
                        client_indices_rounds,

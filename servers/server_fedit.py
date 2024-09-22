@@ -180,7 +180,7 @@ class Server_fedit(BaseServer):
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
-            torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
+            # torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
             # self.config.save_pretrained(output_dir)
             
             for client in selected_client:
