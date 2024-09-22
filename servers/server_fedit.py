@@ -122,7 +122,7 @@ class Server_fedit(BaseServer):
                 #     float(self.args.lr),
                 #     self.candidate_seeds
                 # )
-                client.optimizer = Adam(client.model.parameters(),
+                client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
