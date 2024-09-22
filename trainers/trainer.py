@@ -73,9 +73,8 @@ class Trainer:
         total_loss = 0
         num_trained = 0
         progress_bar = tqdm(range(len(self.client.train_loader)))
-
-        with torch.inference_mode():
-            for i, batch in enumerate(self.client.train_loader):
+            
+        for i, batch in enumerate(self.client.train_loader):
 
                 batch = {
                     'input_ids': batch['input_ids'].to(self.client.device),
