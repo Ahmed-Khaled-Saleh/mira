@@ -49,7 +49,7 @@ class Server_fedit(BaseServer):
 
         self.config = LoraConfig(
                     r=self.args.r,
-                    target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj'],
+                    target_modules=['q_proj',],
                     lora_alpha=16,
                     lora_dropout=0.05,
                     bias="none",
