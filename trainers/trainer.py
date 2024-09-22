@@ -68,6 +68,7 @@ class Trainer:
     
     def _run_epoch(self):
         total_loss = 0
+        num_trained = 0
         progress_bar = tqdm(range(len(self.client.train_loader)))
 
         with torch.inference_mode():
@@ -78,17 +79,22 @@ class Trainer:
                     'labels': batch['labels'].to(self.client.device),
                     'attention_mask': batch['attention_mask'].to(self.client.device) 
                 }
-
-                loss = self._run_batch(batch)
-                if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    total_loss += loss
                 
-                if i % 1000 == 999:
-                    last_loss = total_loss / 1000 
-                    progress_bar.update(i)
-                    progress_bar.set_description(f'client {self.client.idx} Fuly Local Training , loss: {last_loss}')
+                loss = self._run_batch(batch)
+
+                if num_trained == 0:
+                    num_trained = 1e-10
+
+                print(f'Batch loss is {loss}')
+                progress_bar.update(1)
+                progress_bar.set_description(f'client {self.client.idx} total_losstrain at step {i}, loss: {total_loss / num_trained if num_trained != 0 else 0.0}')
+
+                
+                if loss.item() != 0:
+                    total_loss += loss.item()
+                    num_trained += len(batch['input_ids'])
     
-        return total_loss / len(self.client.train_loader)
+        return total_loss / num_trained
     
 
     def _run_epoch_fed(self, local_iters):
@@ -161,7 +167,7 @@ class Trainer:
         train_loss = []
         for _ in range(epochs):
 
-            if fed:
+            if fed and self.client.args.name in ['fedk', 'fedptuning']:
                 avg_train_loss = self._run_epoch_fed(local_iters)
             else:
                 avg_train_loss = self._run_epoch()
