@@ -26,7 +26,8 @@ class Trainer:
         
         
     def _run_batch(self, batch):
-        self.client.optimizer.zero_grad()
+        if not isinstance(self.client.optimizer, MeZOFramework):
+            self.client.optimizer.zero_grad()
 
         def closure():
             out = self.client.model(**batch)
