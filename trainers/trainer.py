@@ -4,7 +4,7 @@ import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
 from optimizers.mezo_torch import MeZOOptimizer
-
+from optimizers.mezo_optimizer import MeZOFramework
 class Trainer:
     def __init__(
         self,
@@ -47,7 +47,14 @@ class Trainer:
                 projected_grad = torch.zeros_like(projected_grad)
 
             self.client._add_seed_pole(zo_random_seed, projected_grad)
-        
+
+        elif isinstance(self.client.optimizer, MeZOFramework):
+            logits, loss = self.client.optimizer.zo_step(batch, self.client.local_seed_pool)
+            if torch.isnan(loss):
+                print("Warning: NaN loss returned from optimizer step")
+                return torch.tensor(float(0), device=loss.device)
+
+
         else:
             loss = closure()
             if loss.item() == 0:
@@ -128,6 +135,7 @@ class Trainer:
             self.client.model.eval()
             with torch.inference_mode():
                 avg_round_loss = local_train()
+        
         else:
             avg_round_loss = local_train()
                     
@@ -268,7 +276,7 @@ class Trainer:
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
 
-                acc_total_train += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+                acc_total_eval += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
 
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / len(batch['input_ids'])}")
                 progress_bar_eval.update(1)

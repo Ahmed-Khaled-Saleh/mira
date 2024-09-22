@@ -29,6 +29,7 @@ from trainers.callbacks import empty_cach, log_memory
 from torch.optim import AdamW
 from servers.base_server import BaseServer
 from optimizers.mezo_torch import MeZOOptimizer
+from optimizers.mezo_optimizer import MeZOFramework
 
 class Server_fedit(BaseServer):
     def __init__(self, args, tokenizer, candidate_seeds, log_dir, **kwargs):
@@ -110,14 +111,17 @@ class Server_fedit(BaseServer):
 
                 client.initiate_local_training()
                 
-                client.optimizer = MeZOOptimizer(client.model.parameters(),
-                                            lr= float(self.args.lr),
-                                            zo_eps= self.args.zo_eps,
-                                            candidate_seeds= self.candidate_seeds,
-                                            weight_decay= float(self.args.weight_decay))
-                # client.optimizer = Adam(client.model.parameters(), 
-                #                         lr= float(self.args.lr),
-                #                         weight_decay= float(self.args.weight_decay))
+                # client.optimizer = MeZOOptimizer(client.model.parameters(),
+                #                             lr= float(self.args.lr),
+                #                             zo_eps= self.args.zo_eps,
+                #                             candidate_seeds= self.candidate_seeds,
+                #                             weight_decay= float(self.args.weight_decay))
+                client.optimizer = MeZOFramework(
+                    client.model,
+                    self.args,
+                    float(self.args.lr),
+                    self.candidate_seeds
+                )
                 
                 trainer = Trainer(client)
             
