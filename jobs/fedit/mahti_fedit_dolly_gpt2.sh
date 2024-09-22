@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=adam_mahti_fedit_dolly_gpt2
+#SBATCH --job-name=adam_nodecay_mahti_fedit_dolly_gpt2
 #SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
 #SBATCH --time=36:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/adam_mahti_fedit_dolly_gpt2.out
-#SBATCH --error=logs/adam_mahti_fedit_dolly_gpt2.err
+#SBATCH --output=logs/adam_nodecay_mahti_fedit_dolly_gpt2.out
+#SBATCH --error=logs/adam_nodecay_mahti_fedit_dolly_gpt2.err
 
 module --force purge
 module load pytorch
