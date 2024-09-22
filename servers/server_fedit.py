@@ -26,7 +26,7 @@ from utils.validation import *  # noqa: F403
 from utils.helper_fuctions import *  # noqa: F403
 from trainers.trainer import Trainer
 from trainers.callbacks import empty_cach, log_memory
-from torch.optim import AdamW
+from torch.optim import AdamW, Adam
 from servers.base_server import BaseServer
 from optimizers.mezo_torch import MeZOOptimizer
 from optimizers.mezo_optimizer import MeZOFramework
@@ -122,7 +122,7 @@ class Server_fedit(BaseServer):
                 #     float(self.args.lr),
                 #     self.candidate_seeds
                 # )
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = Adam(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
