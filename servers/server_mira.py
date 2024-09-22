@@ -41,6 +41,7 @@ class Server_mira(BaseServer):
             load_in_8bit=True,
 
         )
+        self.L_k = 0.01
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
