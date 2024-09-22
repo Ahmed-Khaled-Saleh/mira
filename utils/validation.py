@@ -5,13 +5,16 @@ rouge = Rouge()
 
 
 def rouge_score(hyp_ids, ref_ids, tokenizer):
-    hyps = [tokenizer.decode(hyp_ids, skip_special_tokens=True)]
+    hyps = np.where(hyp_ids != -100, hyp_ids, tokenizer.pad_token)
+    hyps = [tokenizer.decode(hyps, skip_special_tokens=True)]
+    
 
     if len(hyps[0]) == 0:
         return 0.0
     
     refs = [tokenizer.decode(ref_ids, skip_special_tokens=True)]
-        
+    
+    
     try:
         rouge_score = rouge.get_scores(hyps, refs)[0]['rouge-l']['f']
     except ValueError:
