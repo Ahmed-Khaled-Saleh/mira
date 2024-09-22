@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'datajuicer/LLaMA-1B-dj-refine-150B'
-  lr: 1e-06
+  lr: 3e-05
   weight_decay: 1e-04
   grad_clip: -100.0
   K: 4096
