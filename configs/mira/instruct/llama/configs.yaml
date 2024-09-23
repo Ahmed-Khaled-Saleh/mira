@@ -1,21 +1,21 @@
 - name: 'mira'
-  num_clients: 200
-  num_clients_per_task: 25
-  m: 0.05
-  rounds: 40
-  local_step: 200
+  num_clients: 80
+  num_clients_per_task: 10
+  m: 0.1
+  rounds: 60
+  local_step: 50
   batch_or_epoch: 'batch'
   equal_weight: false
-  dataset: 'dolly'
-  batch_size: 1
+  dataset: 'instruct'
+  batch_size: 8
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'openai-community/gpt2'
-  lr: 3e-07
-  weight_decay: 0.0
+  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
+  lr: 3e-4
+  weight_decay: 1e-2
   grad_clip: -100.0
   K: 4096
   zo_eps: 0.0005
@@ -24,9 +24,10 @@
   grad_initial: 0.0
   device: 0
   log: false
-  log_root: 'logs'
+  log_root: 'logs/mira/instruct/llama'
+  output_dir: '/scratch/project_2009050/mira/instruct/llama'
   seed: 42
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'MIRA'
+  project: 'MIRA2'
