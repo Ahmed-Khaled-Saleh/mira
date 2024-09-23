@@ -62,7 +62,7 @@ class Client_fedit(BaseClient):
         self.task = self.task if isinstance(self.task, str) else self.task[0]
         self.train_stat = {}
         self.test_stats = {}
-        self.output_dir = output_dir
+        self.output_dir = self.args.output_dir
         self.local_output_dir = os.path.join(self.output_dir, "trainer_saved", "local_output_{}".format(self.idx))
 
 
