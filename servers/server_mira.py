@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import math
 from copy import deepcopy
+from collections import defaultdict
 from tqdm import tqdm
 
 import torch
@@ -41,7 +42,13 @@ class Server_mira(BaseServer):
             load_in_8bit=True,
 
         )
+        N = self.args.num_clients
+        b = np.random.uniform(0,1,size=(N,N))
+        b_symm = (b + b.T)/2
+        b_symm[b_symm < 0.25] = 0
+        self.alk_connection = b_symm
         self.L_k = 0.01
+        self.beta = 1
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
@@ -202,33 +209,38 @@ class Server_mira(BaseServer):
     
     def aggregate(self, model, selected_clients_set, output_dir, local_dataset_len_dict, epoch, akl):
         
-        for k, client_id in enumerate(selected_clients_set):
-            avg_weight_different = deepcopy(list(self.model.parameters()))
-            for param in avg_weight_different:
-                param.data = torch.zeros_like(param.data)
+        lora_params_dict = defaultdict(list)
 
-            cur_model_dir = os.path.join(output_dir, str(epoch), "local_output_{}".format(client_id),
-                                            "pytorch_model.bin")
-            cur_model = torch.load(cur_model_dir)
+        # Collect LoRA parameters from all clients
+        for client_id in selected_clients_set:
+            client_model_path = os.path.join(output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
+            client_state_dict = torch.load(client_model_path, map_location=self.device)
             
-            nieghbours = list(set(selected_clients_set) - set({client_id}))
+            for name, param in client_state_dict.items():
+                if 'lora_A' in name or 'lora_B' in name:
+                    lora_params_dict[name].append(param)
 
-            akl[int(client_id)][int(selected_clients_set[k].id)] = self.get_alk(selected_clients_set, k)            
+        # Aggregate LoRA parameters
+        for name, params_list in lora_params_dict.items():
+            aggregated_param = torch.zeros_like(params_list[0])
+            client_count = len(params_list)
 
-            for l, nieghbour_idx in enumerate(nieghbours):
-                neighbour_model_dir = os.path.join(output_dir, str(epoch), "local_output_{}".format(nieghbour_idx),
-                                                    "pytorch_model.bin")
-                neighbour_model = torch.load(neighbour_model_dir)
+            for i, client_param in enumerate(params_list):
+                client_id = selected_clients_set[i]
+                for j, other_client_param in enumerate(params_list):
+                    if i != j:
+                        other_client_id = selected_clients_set[j]
+                        weight = akl[int(client_id)][int(other_client_id)]
+                        aggregated_param += weight * (client_param - other_client_param)
 
-                for avg, current_task, other_tasks in zip(avg_weight_different, cur_model.parameters(),neighbour_model.parameters()):
-                   avg.data += akl[int(client_id)][int(nieghbour_idx)] * (current_task.data.clone() - other_tasks.data.clone())
+            # Apply update
+            update_factor = 0.5 * self.args.lr * self.args.L_k * self.args.beta * self.args.local_epochs / client_count
+            aggregated_param *= update_factor
 
-            for avg, current_task in zip(avg_weight_different, cur_model.parameters()):
-                current_task.data = current_task.data - 0.5 * float(self.args.lr) * self.L_k * self.beta * self.local_epochs * avg
-            
-        del avg_weight_different
+            # Update model's LoRA parameters
+            current_param = model.state_dict()[name]
+            model.state_dict()[name].copy_(current_param - aggregated_param)
 
-            
         return model
 
     def eval_clients(self, clients_list):
