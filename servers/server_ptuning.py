@@ -41,7 +41,7 @@ class Server_ptuning(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         self.output_dir = self.args.output_dir
-        
+
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
@@ -105,17 +105,6 @@ class Server_ptuning(BaseServer):
 
                 client.initiate_local_training()
                 
-                # client.optimizer = MeZOOptimizer(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             zo_eps= self.args.zo_eps,
-                #                             candidate_seeds= self.candidate_seeds,
-                #                             weight_decay= float(self.args.weight_decay))
-                # client.optimizer = MeZOFramework(
-                #     client.model,
-                #     self.args,
-                #     float(self.args.lr),
-                #     self.candidate_seeds
-                # )
                 client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
@@ -161,7 +150,6 @@ class Server_ptuning(BaseServer):
             self.model = self.aggregate(
                                         self.model,
                                         client_indices_rounds[t-1],
-                                        output_dir,
                                         local_dataset_len_dict,
                                         t,
                                         )
@@ -177,11 +165,9 @@ class Server_ptuning(BaseServer):
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
-            # torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
-            # self.config.save_pretrained(output_dir)
             
             for client in selected_client:
-                to_del = os.path.join(output_dir, str(t), "local_output_{}".format(client.idx),
+                to_del = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 if os.path.exists(to_del):
                     os.remove(to_del)
@@ -193,14 +179,14 @@ class Server_ptuning(BaseServer):
         return lst_global_metrics_dfs
     
     
-    def aggregate(self, model, selected_clients_set, output_dir, local_dataset_len_dict, epoch):
+    def aggregate(self, model, selected_clients_set, local_dataset_len_dict, epoch):
         weights_array = normalize(
             torch.tensor([local_dataset_len_dict[client_id] for client_id in selected_clients_set],
                         dtype=torch.float32),
             p=1, dim=0)
 
         for k, client_id in enumerate(selected_clients_set):
-            single_output_dir = os.path.join(output_dir, str(epoch), "local_output_{}".format(client_id),
+            single_output_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(client_id),
                                             "pytorch_model.bin")
             single_weights = torch.load(single_output_dir)
             if k == 0:

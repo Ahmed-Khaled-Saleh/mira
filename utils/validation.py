@@ -6,7 +6,7 @@ rouge = Rouge()
 
 def rouge_score(hyp_ids, ref_ids, tokenizer):
     hyps = np.where(hyp_ids != -100, hyp_ids, tokenizer.pad_token)
-    hyps = [tokenizer.decode(hyps, skip_special_tokens=True)]
+    hyps = [tokenizer.decode(hyps.cpu(), skip_special_tokens=True)]
     
 
     if len(hyps[0]) == 0:
