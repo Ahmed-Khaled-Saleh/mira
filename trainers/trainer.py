@@ -166,10 +166,10 @@ class Trainer:
         train_loss = []
         for _ in range(epochs):
 
-            if fed and self.client.args.name in ['fedk', 'fedptuning', 'fedit', 'mira']:
-                avg_train_loss = self._run_epoch_fed(local_iters)
-            else:
-                avg_train_loss = self._run_epoch()
+            # if fed and self.client.args.name in ['fedk', 'fedptuning', 'fedit', 'mira']:
+            #     avg_train_loss = self._run_epoch_fed(local_iters)
+            # else:
+            avg_train_loss = self._run_epoch()
 
             train_loss.append(avg_train_loss)
 

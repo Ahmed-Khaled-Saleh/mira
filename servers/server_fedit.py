@@ -111,17 +111,6 @@ class Server_fedit(BaseServer):
 
                 client.initiate_local_training()
                 
-                # client.optimizer = MeZOOptimizer(client.model.parameters(),
-                #                             lr= float(self.args.lr),
-                #                             zo_eps= self.args.zo_eps,
-                #                             candidate_seeds= self.candidate_seeds,
-                #                             weight_decay= float(self.args.weight_decay))
-                # client.optimizer = MeZOFramework(
-                #     client.model,
-                #     self.args,
-                #     float(self.args.lr),
-                #     self.candidate_seeds
-                # )
                 client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
@@ -183,9 +172,6 @@ class Server_fedit(BaseServer):
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
-            # torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
-            # self.config.save_pretrained(output_dir)
-            
             for client in selected_client:
                 to_del = os.path.join(output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
