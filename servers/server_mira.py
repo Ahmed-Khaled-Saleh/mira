@@ -117,7 +117,7 @@ class Server_mira(BaseServer):
 
                 model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
-                if os.path.exists(model_path):
+                if t > 1:
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))
                 else:
                     with torch.no_grad():
