@@ -6,7 +6,7 @@ rouge = Rouge()
 
 
 def rouge_score(hyp_ids, ref_ids, tokenizer):
-    hyps = torch.where(hyp_ids != -100, hyp_ids, tokenizer.pad_token)
+    hyps = torch.where(hyp_ids != -100, hyp_ids, tokenizer.pad_token_id)
     hyps = [tokenizer.decode(hyps, skip_special_tokens=True)]
     
 

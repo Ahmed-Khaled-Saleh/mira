@@ -38,6 +38,7 @@ class Server_mira(BaseServer):
         self.candidate_seeds = candidate_seeds
         self.tokenizer = tokenizer
         self.log_dir = log_dir
+        self.output_dir = self.args.output_dir
         self.quant_config = BitsAndBytesConfig(
             load_in_8bit=True,
 
@@ -66,6 +67,7 @@ class Server_mira(BaseServer):
         
         self.model = get_peft_model(self.model, self.config)
         self.model.resize_token_embeddings(len(self.tokenizer))
+        self.lora_param_names = [name for name in self.model.state_dict().keys() if 'lora_A' in name or 'lora_B' in name]
 
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
@@ -113,7 +115,7 @@ class Server_mira(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                model_path = os.path.join(output_dir, str(t), "local_output_{}".format(client.idx),
+                model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 if os.path.exists(model_path):
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))
@@ -174,8 +176,6 @@ class Server_mira(BaseServer):
             print("Collecting the weights of clients and performing aggregation")
             self.aggregate(
                             client_indices_rounds[t-1],
-                            output_dir,
-                            local_dataset_len_dict,
                             t,
                             )
             
@@ -189,12 +189,9 @@ class Server_mira(BaseServer):
                      f"round {t} (GM) Metrics": round_global_metrics})
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
-
-            # torch.save(self.model.state_dict(), os.path.join(output_dir, str(t), "adapter_model.bin"))
-            # self.config.save_pretrained(output_dir)
             
             for client in selected_client:
-                to_del = os.path.join(output_dir, str(t), "local_output_{}".format(client.idx),
+                to_del = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 if os.path.exists(to_del):
                     os.remove(to_del)
@@ -208,43 +205,34 @@ class Server_mira(BaseServer):
     
     
     
-    def aggregate(self, selected_clients_set, output_dir, epoch, akl):
-        lora_avg_diffs = defaultdict(lambda: torch.tensor(0.0).to(self.device))
-        client_count = len(selected_clients_set)
-
-        # First pass: identify LoRA parameters and their shapes
-        first_client_path = os.path.join(output_dir, str(epoch), f"local_output_{selected_clients_set[0]}", "pytorch_model.bin")
-        first_client_state_dict = torch.load(first_client_path, map_location=self.device)
-        lora_param_names = [name for name in first_client_state_dict.keys() if 'lora_A' in name or 'lora_B' in name]
-
-        for name in lora_param_names:
-            lora_avg_diffs[name] = torch.zeros_like(first_client_state_dict[name]).to(self.device)
+    def aggregate(self, selected_clients_set, epoch):
 
         # Compute pairwise differences and aggregate
         for i, client_id in enumerate(selected_clients_set):
-            client_path = os.path.join(output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
-            client_state_dict = torch.load(client_path, map_location=self.device)
+            client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
+            client_state_dict = torch.load(client_path, map_location=self.device).state_dict()
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
-            for name in lora_param_names:
+
+            for name in self.lora_param_names:
                 client_diff[name] = torch.zeros_like(client_state_dict[name]).to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
                 if i != j:
-                    other_client_path = os.path.join(output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
-                    other_client_state_dict = torch.load(other_client_path, map_location=self.device)
+                    other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
+                    other_client_state_dict = torch.load(other_client_path, map_location=self.device).state_dict()
 
-                    weight = akl[int(client_id)][int(other_client_id)]
-                    for name in lora_param_names:
-                        client_diff[name] += weight * (client_state_dict[name] - other_client_state_dict[name])
+                    weight = self.alk_connection[int(client_id)][int(other_client_id)]
+                    for name in self.lora_param_names:
+                        client_diff[name].data += weight * (client_state_dict[name].data.clone() - other_client_state_dict[name].data.clone())
 
-            # Aggregate the average difference
-            for name in lora_param_names:
-                lora_avg_diffs[name] += client_diff[name] / client_count
+            for name in self.lora_param_names:
+                client_state_dict[name].data -= 0.5 * float(self.args.learning_rate) * self.L_k * self.beta * client_diff[name].data
 
-            del client_state_dict, client_diff
+            # save the updated model
+            save_path = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}", "pytorch_model.bin")
+            torch.save(client_state_dict, save_path)
 
-        return dict(lora_avg_diffs)
 
     def apply_updates(self, model, avg_diffs):
         update_factor = 0.5 * self.args.lr * self.args.L_k * self.args.beta * self.args.local_epochs
