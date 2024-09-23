@@ -39,7 +39,9 @@ def process_main(args_config_fname):
 
     args = argparse.Namespace(**experiment)
     args.hf_secret = hf_secret
-    run = wandb.init(project=args.project, name= args.name, config=args)
+    exp_nam = args.log_root.split('/')[1:]
+    exp_name = '_'.join(exp_nam)
+    run = wandb.init(project=args.project, name= exp_name, config=args)
     client_indices_rounds = get_client_indices_rounds(args)
     print("client indices rounds generated", client_indices_rounds)
     

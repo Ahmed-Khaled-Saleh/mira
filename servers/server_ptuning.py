@@ -40,10 +40,8 @@ class Server_ptuning(BaseServer):
         self.candidate_seeds = candidate_seeds
         self.tokenizer = tokenizer
         self.log_dir = log_dir
-        self.quant_config = BitsAndBytesConfig(
-            load_in_8bit=True,
-
-        )
+        self.output_dir = self.args.output_dir
+        
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
