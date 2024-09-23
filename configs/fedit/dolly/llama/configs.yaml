@@ -3,7 +3,7 @@
   num_clients_per_task: 10
   m: 0.1
   rounds: 60
-  local_step: 200
+  local_step: 50
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
@@ -25,8 +25,9 @@
   device: 0
   log: false
   log_root: 'logs'
+  output_dir: 'outputs'
   seed: 42
   eval_metric: 'rouge'
   save: false
   r: 16
-  project: 'MIRALoraADAM'
+  project: 'MIRA2'
