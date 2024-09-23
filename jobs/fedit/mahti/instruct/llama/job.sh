@@ -7,8 +7,8 @@
 #SBATCH --mem=100G
 #SBATCH --time=36:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/fedit_mahti_instruct_llama.out
-#SBATCH --error=logs/fedit_mahti_instruct_llama.err
+#SBATCH --output=logs/fedit/instruct/llama/out.out
+#SBATCH --error=logs/fedit/instruct/llama/out.err
 
 module --force purge
 module load pytorch
