@@ -1,4 +1,4 @@
-- name: 'fedit'
+- name: 'mira'
   num_clients: 80
   num_clients_per_task: 10
   m: 0.1
@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'openai-community/gpt2'
+  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
   lr: 1.5e-5
   weight_decay: 1e-1
   grad_clip: -100.0
