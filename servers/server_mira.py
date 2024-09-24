@@ -127,8 +127,6 @@ class Server_mira(BaseServer):
                 
                 client.model = client.model.to(self.device)
 
-                self.lora_param_names = [name for name in client.model.state_dict().keys() if 'lora_A' in name or 'lora_B' in name]
-
                 client.initiate_local_training()
                 
                 client.optimizer = AdamW(client.model.parameters(),
@@ -215,11 +213,11 @@ class Server_mira(BaseServer):
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
-            print("client_state_dict: ", client_state_dict.keys())
+            lora_param_names = [name for name in client_state_dict.keys() if 'lora_A' in name or 'lora_B' in name]
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
-            for name in self.lora_param_names:
+            for name in lora_param_names:
                 client_diff[name] = torch.zeros_like(client_state_dict[name]).to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
@@ -228,10 +226,10 @@ class Server_mira(BaseServer):
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
                     weight = self.alk_connection[int(client_id)][int(other_client_id)]
-                    for name in self.lora_param_names:
+                    for name in lora_param_names:
                         client_diff[name].data += weight * (client_state_dict[name].data.clone() - other_client_state_dict[name].data.clone())
 
-            for name in self.lora_param_names:
+            for name in lora_param_names:
                 client_state_dict[name].data -= 0.5 * float(self.args.learning_rate) * self.L_k * self.beta * client_diff[name].data
 
             # save the updated model
