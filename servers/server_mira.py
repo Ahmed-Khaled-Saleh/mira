@@ -118,11 +118,10 @@ class Server_mira(BaseServer):
                 model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 
-                if t == 1:
-                    with torch.no_grad():
-                        client.model = deepcopy(self.model)
+                with torch.no_grad():
+                    client.model = self.model
                         
-                else:
+                if t > 1:
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))
                 
                 client.model = client.model.to(self.device)
