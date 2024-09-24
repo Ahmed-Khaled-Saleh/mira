@@ -233,7 +233,9 @@ class Server_mira(BaseServer):
                 client_state_dict[name].data -= 0.5 * float(self.args.lr) * self.L_k * self.beta * client_diff[name].data
 
             # save the updated model
-            save_path = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}", "pytorch_model.bin")
+            save_dir = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}")
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, "pytorch_model.bin")
             torch.save(client_state_dict, save_path)
 
 
