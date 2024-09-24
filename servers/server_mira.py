@@ -127,6 +127,8 @@ class Server_mira(BaseServer):
                 
                 client.model = client.model.to(self.device)
 
+                self.lora_param_names = [name for name in client.model.state_dict().keys() if 'lora_A' in name or 'lora_B' in name]
+
                 client.initiate_local_training()
                 
                 client.optimizer = AdamW(client.model.parameters(),
@@ -213,7 +215,7 @@ class Server_mira(BaseServer):
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
-            print("client_state_dict: ", client_state_dict)
+            print("client_state_dict: ", client_state_dict.keys())
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
