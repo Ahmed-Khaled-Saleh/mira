@@ -27,7 +27,7 @@ from utils.validation import *  # noqa: F403
 from utils.helper_fuctions import *  # noqa: F403
 from trainers.trainer import Trainer
 from trainers.callbacks import empty_cach, log_memory
-from torch.optim import AdamW, Adam
+from torch.optim import AdamW, Adam, SGD
 from servers.base_server import BaseServer
 from optimizers.mezo_torch import MeZOOptimizer
 from optimizers.mezo_optimizer import MeZOFramework
@@ -134,8 +134,9 @@ class Server_mira(BaseServer):
                 
                 client.initiate_local_training()
                 
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = SGD(client.model.parameters(),
                                         lr= float(self.args.lr),
+                                        momentum=0.9,
                                         weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
