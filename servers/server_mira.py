@@ -117,15 +117,15 @@ class Server_mira(BaseServer):
 
                 model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
-                
-                with torch.no_grad():
-                    client.model = self.model
-                client.model = client.model.to(self.device)
-                if t > 1:
-                    client.model.load_state_dict(torch.load(model_path, map_location=self.device))
-                
-                
 
+                if os.path.exists(model_path):
+                    client.model.load_state_dict(torch.load(model_path, map_location=self.device))
+                else:
+                    with torch.no_grad():
+                        client.model = deepcopy(self.model)
+                
+                client.model = client.model.to(self.device)
+                
                 client.initiate_local_training()
                 
                 client.optimizer = AdamW(client.model.parameters(),
