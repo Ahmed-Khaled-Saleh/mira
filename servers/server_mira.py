@@ -230,7 +230,7 @@ class Server_mira(BaseServer):
                         client_diff[name].data += weight * (client_state_dict[name].data.clone() - other_client_state_dict[name].data.clone())
 
             for name in lora_param_names:
-                client_state_dict[name].data -= 0.5 * float(self.args.learning_rate) * self.L_k * self.beta * client_diff[name].data
+                client_state_dict[name].data -= 0.5 * float(self.args.lr) * self.L_k * self.beta * client_diff[name].data
 
             # save the updated model
             save_path = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}", "pytorch_model.bin")
