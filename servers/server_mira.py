@@ -49,7 +49,7 @@ class Server_mira(BaseServer):
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
         self.L_k = 0.01
-        self.beta = 1
+        self.beta = 0.001
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
