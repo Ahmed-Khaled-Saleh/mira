@@ -120,11 +120,11 @@ class Server_mira(BaseServer):
                 
                 with torch.no_grad():
                     client.model = self.model
-                        
+                client.model = client.model.to(self.device)
                 if t > 1:
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))
                 
-                client.model = client.model.to(self.device)
+                
 
                 client.initiate_local_training()
                 
@@ -168,11 +168,11 @@ class Server_mira(BaseServer):
                 gc.collect()
                 torch.cuda.empty_cache()
             
-            if self.model:
-                del self.model
-                import gc
-                gc.collect()
-                torch.cuda.empty_cache()
+            # if self.model:
+            #     del self.model
+            #     import gc
+            #     gc.collect()
+            #     torch.cuda.empty_cache()
 
             print("Collecting the weights of clients and performing aggregation")
             self.aggregate(
