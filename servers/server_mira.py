@@ -1,3 +1,4 @@
+from accelerate import Accelerator
 import numpy as np
 import pandas as pd
 import os
@@ -117,6 +118,7 @@ class Server_mira(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
+                client.accelerator = Accelerator()
                 if client.idx in latest_model_iter:
                     comm_round = latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
@@ -130,7 +132,7 @@ class Server_mira(BaseServer):
                 if os.path.exists(model_path):
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))                    
                 
-                client.model = client.model.to(self.device)
+                # client.model = client.model.to(self.device)
                 
                 client.initiate_local_training()
                 
@@ -219,27 +221,14 @@ class Server_mira(BaseServer):
     
     def aggregate(self, selected_clients_set, epoch):
 
-        # for k, client_id in enumerate(selected_clients_set):
-        #     cur_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(client_id),
-        #                                     "pytorch_model.bin")
-        #     cur_client = torch.load(cur_dir,map_location=self.device)
-
-        #     for j, other_client_id in enumerate(selected_clients_set):
-        #         if i != j:
-        #             other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
-        #             other_client_state_dict = torch.load(other_client_path, map_location=self.device)
-
-        #         for key in cur_client.keys():
-        #             pass
-        # Compute pairwise differences and aggregate
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
 
-            client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
+            client_diff = defaultdict(lambda: torch.tensor(0.0))#.to(self.device))
 
             for key in client_state_dict.keys():
-                client_diff[key] = torch.zeros_like(client_state_dict[key]).to(self.device)
+                client_diff[key] = torch.zeros_like(client_state_dict[key])#.to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
                 if i != j:

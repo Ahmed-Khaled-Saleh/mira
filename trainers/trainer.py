@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torch.optimi.lr_scheduler import ReduceLROnPlateau
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
@@ -16,16 +17,28 @@ class Trainer:
             It accepts a client at initialization, which contains all necessary infromation 
             to implement a training loop for a federated learning setup.
         '''
-        
+        self.accelerator = client.accelerator
         self.client = client       
         self.client.train_loader = self.prepare_dataloader(self.client.train_ds, self.client.args.batch_size, self.client.data_collator)
         self.client.eval_loader = self.prepare_dataloader(self.client.eval_ds, self.client.args.batch_size, self.client.data_collator)
+        self.client.eval_loader = self.accelerator.prepare(self.client.eval_loader)
         self.client.train_loader_genr = self.prepare_dataloader(self.client.train_ds_genr, self.client.args.batch_size, self.client.data_collator)
+        self.client.train_loader_genr = self.accelerator.prepare(self.client.train_loader_genr)
         self.client.eval_loader_genr = self.prepare_dataloader(self.client.eval_ds_genr, self.client.args.batch_size, self.client.data_collator)
+        self.client.eval_loader_genr = self.accelerator.prepare(self.client.eval_loader_genr)
         self.client.train_iterator = iter(self.client.train_loader)
+        self.client.lr_scheduler = ReduceLROnPlateau(self.client.optimizer, mode='min', factor=0.1)
+
+        self.client.model, self.client.optimizer, self.client.train_loader, self.client.lr_scheduler = self.accelerator.prepare(
+            self.client.model,
+            self.client.optimizer,
+            self.client.train_loader,
+            self.client.lr_scheduler
+        )
+
         
-        
-    def _run_batch(self, batch):
+    def _run_batch(self, batch):        
+
         if not isinstance(self.client.optimizer, MeZOFramework):
             self.client.optimizer.zero_grad()
 
@@ -34,14 +47,14 @@ class Trainer:
             loss = self.client.criterion(out)
             if torch.isnan(loss):
                 print("Warning: NaN loss detected in closure")
-                return torch.tensor(float(0), device=loss.device)
+                return torch.tensor(float(0))#, device=loss.device)
             return loss
         
         if isinstance(self.client.optimizer, MeZOOptimizer):
             loss, zo_random_seed, projected_grad = self.client.optimizer.step(closure)
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
-                return torch.tensor(float(0), device=loss.device)
+                return torch.tensor(float(0))#, device=loss.device)
         
             if torch.isnan(projected_grad).any():
                 print("Warning: NaN detected in projected gradient after optimizer step")
@@ -53,16 +66,17 @@ class Trainer:
             logits, loss = self.client.optimizer.zo_step(batch, self.client.local_seed_pool)
             if torch.isnan(loss):
                 print("Warning: NaN loss returned from optimizer step")
-                return torch.tensor(float(0), device=loss.device)
-
+                return torch.tensor(float(0))#, device=loss.device)
 
         else:
             loss = closure()
             if loss.item() == 0:
                 return loss
-            loss.backward()
+            #loss.backward()
+            self.accelerator.backward(loss)
             torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), max_norm=1.0)
             self.client.optimizer.step()
+            self.client.lr_scheduler.step(loss)
         
         return loss
     
@@ -74,9 +88,9 @@ class Trainer:
         for i, batch in enumerate(self.client.train_loader):
 
                 batch = {
-                    'input_ids': batch['input_ids'].to(self.client.device),
-                    'labels': batch['labels'].to(self.client.device),
-                    'attention_mask': batch['attention_mask'].to(self.client.device) 
+                    'input_ids': batch['input_ids'],#.to(self.client.device),
+                    'labels': batch['labels'],#.to(self.client.device),
+                    'attention_mask': batch['attention_mask']#.to(self.client.device) 
                 }
                 
                 loss = self._run_batch(batch)
@@ -114,9 +128,9 @@ class Trainer:
                     batch = next(self.client.train_iterator)
                 
                 batch = {
-                    'input_ids': batch['input_ids'].to(self.client.device),
-                    'labels': batch['labels'].to(self.client.device),
-                    'attention_mask': batch['attention_mask'].to(self.client.device) 
+                    'input_ids': batch['input_ids'],#.to(self.client.device),
+                    'labels': batch['labels'],#.to(self.client.device),
+                    'attention_mask': batch['attention_mask']#.to(self.client.device) 
                 }
                 
                 loss = self._run_batch(batch)
@@ -137,7 +151,7 @@ class Trainer:
         
 
         if isinstance(self.client.optimizer, MeZOOptimizer):
-            self.client.model = self.client.model.to(self.client.device)
+            self.client.model = self.client.model#.to(self.client.device)
             self.client.model.eval()
             with torch.inference_mode():
                 avg_round_loss = local_train()
@@ -187,7 +201,7 @@ class Trainer:
         print('Inside the eval () function of client ', self.client.idx)
 
         
-        self.client.model = self.client.model.to(self.client.device)
+        self.client.model = self.client.model#.to(self.client.device)
         self.client.model.eval()
         
         def _run_batch(batch):
@@ -201,9 +215,9 @@ class Trainer:
             for i, batch in enumerate(self.client.eval_loader):
                 
                 batch = {
-                    'input_ids': batch['input_ids'].to(self.client.device),
-                    'labels': batch['labels'].to(self.client.device),
-                    'attention_mask': batch['attention_mask'].to(self.client.device) 
+                    'input_ids': batch['input_ids'],#.to(self.client.device),
+                    'labels': batch['labels'],#.to(self.client.device),
+                    'attention_mask': batch['attention_mask']#.to(self.client.device) 
                 }
                 
                 loss = _run_batch(batch)
@@ -221,7 +235,7 @@ class Trainer:
         print("****************************************")
         print('Inside the train_generate () function of client ', self.client.idx)
 
-        self.client.model = self.client.model.to(self.client.device)
+        # self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_train = tqdm(range(len(self.client.train_loader_genr)))
@@ -230,9 +244,9 @@ class Trainer:
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
                 
-                input_ids = batch['input_ids'].to(self.client.device)
-                label_ids = batch['labels'].to(self.client.device)
-                attention_mask=batch['attention_mask'].to(self.client.device)
+                input_ids = batch['input_ids'],#.to(self.client.device)
+                label_ids = batch['labels'],#.to(self.client.device)
+                attention_mask=batch['attention_mask']#.to(self.client.device)
 
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
@@ -260,7 +274,7 @@ class Trainer:
         print("****************************************")
         print('Inside the eval_generate () function of client ', self.client.idx)
 
-        self.client.model = self.client.model.to(self.client.device)
+        # self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
         
         progress_bar_eval = tqdm(range(len(self.client.eval_loader_genr)))
