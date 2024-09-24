@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torch.optimi.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.multiprocessing as mp
 from tqdm import tqdm
 from utils.validation import rouge_score
