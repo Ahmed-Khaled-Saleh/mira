@@ -1,4 +1,3 @@
-from accelerate import Accelerator
 import numpy as np
 import pandas as pd
 import os
@@ -72,7 +71,7 @@ class Server_mira(BaseServer):
 
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
-        # self.device = torch.device(f'cuda:{self.args.device}')
+        self.device = torch.device(f'cuda:{self.args.device}')
 
         if self.args.bias_sampling:
             self.gradient_history = {seed: [self.args.grad_initial] for seed in self.candidate_seeds}
@@ -118,8 +117,6 @@ class Server_mira(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                client.accelerator = Accelerator()
-                self.device = client.accelerator.device
                 if client.idx in latest_model_iter:
                     comm_round = latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
@@ -226,10 +223,10 @@ class Server_mira(BaseServer):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
 
-            client_diff = defaultdict(lambda: torch.tensor(0.0))#.to(self.device))
+            client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
             for key in client_state_dict.keys():
-                client_diff[key] = torch.zeros_like(client_state_dict[key])#.to(self.device)
+                client_diff[key] = torch.zeros_like(client_state_dict[key]).to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
                 if i != j:

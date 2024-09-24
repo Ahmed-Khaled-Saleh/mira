@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'datajuicer/LLaMA-1B-dj-refine-150B'
+  model: 'openai-community/gpt2'
   lr: 1.5e-5
   weight_decay: 1e-1
   grad_clip: -100.0
