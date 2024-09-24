@@ -213,6 +213,7 @@ class Server_mira(BaseServer):
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
+            print("client_state_dict: ", client_state_dict)
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
