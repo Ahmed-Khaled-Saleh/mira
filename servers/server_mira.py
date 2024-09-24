@@ -249,16 +249,6 @@ class Server_mira(BaseServer):
             torch.save(client_state_dict, save_path)
 
 
-    def apply_updates(self, model, avg_diffs):
-        update_factor = 0.5 * self.args.lr * self.args.L_k * self.args.beta * self.args.local_epochs
-        with torch.no_grad():
-            for name, avg_diff in avg_diffs.items():
-                if name in model.state_dict():
-                    current_param = model.state_dict()[name]
-                    updated_param = current_param - update_factor * avg_diff
-                    model.state_dict()[name].copy_(updated_param)
-
-
     def eval_clients(self, clients_list):
         clients_metrics = []
         train_acc = 0
