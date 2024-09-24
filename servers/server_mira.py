@@ -187,8 +187,6 @@ class Server_mira(BaseServer):
                             t,
                             )
             
-            
-
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
 
