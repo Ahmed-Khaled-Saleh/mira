@@ -187,8 +187,7 @@ class Server_mira(BaseServer):
                             t,
                             )
             
-            for client in selected_client:
-                latest_model_iter[client.idx] = t
+            
 
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
@@ -202,10 +201,14 @@ class Server_mira(BaseServer):
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
             
             for client in selected_client:
-                to_del = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
+                if client.idx in latest_model_iter:
+                    to_del = os.path.join(self.output_dir, str(latest_model_iter[client.idx]), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
-                if os.path.exists(to_del):
-                    os.remove(to_del)
+                    if os.path.exists(to_del):
+                        os.remove(to_del)
+
+            for client in selected_client:
+                latest_model_iter[client.idx] = t
                 
         train_acc, eval_acc = self.eval_clients(self.client_list)
         run.log({"Train Accuracy": train_acc,
