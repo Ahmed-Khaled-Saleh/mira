@@ -134,9 +134,9 @@ class Server_mira(BaseServer):
                 
                 client.initiate_local_training()
                 
-                client.optimizer = SGD(client.model.parameters(),
+                client.optimizer = Adam(client.model.parameters(),
                                         lr= float(self.args.lr),
-                                        momentum=0.9,
+                                        # momentum=0.9,
                                         weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
@@ -219,16 +219,27 @@ class Server_mira(BaseServer):
     
     def aggregate(self, selected_clients_set, epoch):
 
+        # for k, client_id in enumerate(selected_clients_set):
+        #     cur_dir = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(client_id),
+        #                                     "pytorch_model.bin")
+        #     cur_client = torch.load(cur_dir,map_location=self.device)
+
+        #     for j, other_client_id in enumerate(selected_clients_set):
+        #         if i != j:
+        #             other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
+        #             other_client_state_dict = torch.load(other_client_path, map_location=self.device)
+
+        #         for key in cur_client.keys():
+        #             pass
         # Compute pairwise differences and aggregate
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
             client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
-            lora_param_names = [name for name in client_state_dict.keys() if 'lora_A' in name or 'lora_B' in name]
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
-            for name in lora_param_names:
-                client_diff[name] = torch.zeros_like(client_state_dict[name]).to(self.device)
+            for key in client_state_dict.keys():
+                client_diff[key] = torch.zeros_like(client_state_dict[key]).to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
                 if i != j:
@@ -236,11 +247,13 @@ class Server_mira(BaseServer):
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
                     weight = self.alk_connection[int(client_id)][int(other_client_id)]
-                    for name in lora_param_names:
-                        client_diff[name].data += weight * (client_state_dict[name].data.clone() - other_client_state_dict[name].data.clone())
+                    for key in client_state_dict.keys():
+                        client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
-            for name in lora_param_names:
-                client_state_dict[name].data -= 0.5 * float(self.args.lr) * float(self.args.local_step) * self.L_k * self.beta * client_diff[name].data
+            for key in client_state_dict:
+                client_state_dict[key].data -= 0.5 * float(self.args.lr) * float(self.args.local_step) * self.L_k * self.beta * client_diff[key].data
+
+            set_peft_model_state_dict(self.model, client_state_dict, "default")
 
             # save the updated model
             save_dir = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}")
