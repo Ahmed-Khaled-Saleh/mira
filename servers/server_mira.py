@@ -103,7 +103,8 @@ class Server_mira(BaseServer):
         local_dataset_len_dict = dict()
         
         print("Finished initializing the clients")
-        
+        latest_model_iter = dict()
+
         for t in range(1, args.rounds + 1):
             print("length of client list: ", len(self.client_list))
             print("length of client indices rounds: ", len(client_indices_rounds[t-1]))
@@ -112,11 +113,16 @@ class Server_mira(BaseServer):
             lst_global_metrics = []
             print("Starting round ", t)
             print("****************************************")
+
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
+                if client.idx in latest_model_iter:
+                    comm_round = latest_model_iter[client.idx]
+                    model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
+                else:
+                    model_path = None
 
                 with torch.no_grad():
                     client.model = deepcopy(self.model)
@@ -173,13 +179,16 @@ class Server_mira(BaseServer):
             #     import gc
             #     gc.collect()
             #     torch.cuda.empty_cache()
-
+            
             print("Collecting the weights of clients and performing aggregation")
             self.aggregate(
                             client_indices_rounds[t-1],
                             t,
                             )
             
+            for client in selected_client:
+                latest_model_iter[client.idx] = t
+
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
 
