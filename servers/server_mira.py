@@ -117,12 +117,14 @@ class Server_mira(BaseServer):
 
                 model_path = os.path.join(self.output_dir, str(t), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
-                if t > 1:
-                    client.model.load_state_dict(torch.load(model_path, map_location=self.device))
-                else:
+                
+                if t == 1:
                     with torch.no_grad():
                         client.model = deepcopy(self.model)
-
+                        
+                else:
+                    client.model.load_state_dict(torch.load(model_path, map_location=self.device))
+                
                 client.model = client.model.to(self.device)
 
                 client.initiate_local_training()
@@ -210,7 +212,7 @@ class Server_mira(BaseServer):
         # Compute pairwise differences and aggregate
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
-            client_state_dict = torch.load(client_path, map_location=self.device).state_dict()
+            client_state_dict = torch.load(client_path, map_location=self.device)#.state_dict()
 
             client_diff = defaultdict(lambda: torch.tensor(0.0).to(self.device))
 
@@ -220,7 +222,7 @@ class Server_mira(BaseServer):
             for j, other_client_id in enumerate(selected_clients_set):
                 if i != j:
                     other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
-                    other_client_state_dict = torch.load(other_client_path, map_location=self.device).state_dict()
+                    other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
                     weight = self.alk_connection[int(client_id)][int(other_client_id)]
                     for name in self.lora_param_names:
