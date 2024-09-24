@@ -72,7 +72,7 @@ class Server_mira(BaseServer):
 
         self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
-        self.device = torch.device(f'cuda:{self.args.device}')
+        # self.device = torch.device(f'cuda:{self.args.device}')
 
         if self.args.bias_sampling:
             self.gradient_history = {seed: [self.args.grad_initial] for seed in self.candidate_seeds}
@@ -119,6 +119,7 @@ class Server_mira(BaseServer):
                 print("Client ", client.idx, " is training")
 
                 client.accelerator = Accelerator()
+                self.device = client.accelerator.device
                 if client.idx in latest_model_iter:
                     comm_round = latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
@@ -132,7 +133,7 @@ class Server_mira(BaseServer):
                 if os.path.exists(model_path):
                     client.model.load_state_dict(torch.load(model_path, map_location=self.device))                    
                 
-                # client.model = client.model.to(self.device)
+                client.model = client.model.to(self.device)
                 
                 client.initiate_local_training()
                 
