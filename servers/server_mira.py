@@ -122,7 +122,7 @@ class Server_mira(BaseServer):
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 else:
-                    model_path = None
+                    model_path = ''
 
                 with torch.no_grad():
                     client.model = deepcopy(self.model)
