@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
 #SBATCH --job-name=mira_mahti_instruct_llama
-#SBATCH --partition=gpumedium
+#SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
