@@ -69,14 +69,15 @@ class Trainer:
                 return torch.tensor(float(0))#, device=loss.device)
 
         else:
-            loss = closure()
-            if loss.item() == 0:
-                return loss
-            #loss.backward()
-            self.accelerator.backward(loss)
-            torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), max_norm=1.0)
-            self.client.optimizer.step()
-            self.client.lr_scheduler.step(loss)
+            with self.client.accelerator.accumulate(self.client.model):
+                loss = closure()
+                if loss.item() == 0:
+                    return loss
+                #loss.backward()
+                self.accelerator.backward(loss)
+                torch.nn.utils.clip_grad_norm_(self.client.model.parameters(), max_norm=1.0)
+                self.client.optimizer.step()
+                self.client.lr_scheduler.step(loss)
         
         return loss
     
