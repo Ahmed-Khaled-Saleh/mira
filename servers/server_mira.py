@@ -241,7 +241,7 @@ class Server_mira(BaseServer):
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
             for key in client_state_dict:
-                client_state_dict[key].data -= 0.5 * float(self.args.lr) * float(self.args.local_step) * self.L_k * self.beta * client_diff[key].data
+                client_state_dict[key].data -= float(self.args.lr) * float(self.args.local_step) * self.L_k * self.beta * client_diff[key].data
 
             set_peft_model_state_dict(self.model, client_state_dict, "default")
 
