@@ -14,7 +14,7 @@ def rouge_score(hyp_ids, ref_ids, tokenizer):
         return 0.0
     
     refs = torch.where(ref_ids != -100, ref_ids, tokenizer.pad_token_id)
-    refs = [tokenizer.decode(ref_ids, skip_special_tokens=True)]
+    refs = [tokenizer.decode(refs, skip_special_tokens=True)]
     
     
     try:
