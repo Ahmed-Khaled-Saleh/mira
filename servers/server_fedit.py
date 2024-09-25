@@ -114,7 +114,7 @@ class Server_fedit(BaseServer):
                 trainer = Trainer(client)
             
                 local_iters = client.args.local_step
-                epochs = 1
+                epochs = client.args.local_step
                 
                 metrics = {}
                 train_loss, val_loss = trainer.train(fed= True,
