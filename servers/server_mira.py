@@ -128,7 +128,10 @@ class Server_mira(BaseServer):
                     client.model = deepcopy(self.model)
 
                 if os.path.exists(model_path):
-                    client.model.load_state_dict(torch.load(model_path, map_location=self.device))                    
+                    set_peft_model_state_dict(client.model,
+                                              torch.load(model_path, map_location=self.device),
+                                              "default")
+                    # client.model.load_state_dict(torch.load(model_path, map_location=self.device))                    
                 
                 client.model = client.model.to(self.device)
                 
