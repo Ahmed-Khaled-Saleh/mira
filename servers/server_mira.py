@@ -48,7 +48,7 @@ class Server_mira(BaseServer):
         b_symm = (b + b.T)/2
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
-        self.L_k = 0.01
+        self.L_k = 1
         self.beta = 0.001
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
@@ -235,7 +235,8 @@ class Server_mira(BaseServer):
                     other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
-                    weight = self.alk_connection[int(client_id)][int(other_client_id)]
+                    # self.alk_connection[int(client_id)][int(other_client_id)] = self.get_alk()
+                    weight = self.get_alk()
                     for key in client_state_dict.keys():
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
@@ -289,7 +290,7 @@ class Server_mira(BaseServer):
     
     
     
-    def get_alk(self, k):
+    def get_alk(self):
         # temporary fix value of akl, all client has same value of akl
         #akl = 0.25 # can set any value but need to modify eta accordingly
         akl = 0.5
