@@ -48,8 +48,8 @@ class Server_mira(BaseServer):
         b_symm = (b + b.T)/2
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
-        self.L_k = 1
-        self.beta = 0.001
+        self.L_k = 1e-2
+        self.beta = 1
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
@@ -220,6 +220,8 @@ class Server_mira(BaseServer):
     
     
     def aggregate(self, selected_clients_set, epoch):
+        global_lr = float(self.args.lr) * float(self.args.local_step)
+        reg_param = self.L_k
 
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}", "pytorch_model.bin")
@@ -241,9 +243,9 @@ class Server_mira(BaseServer):
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
             for key in client_state_dict:
-                client_state_dict[key].data -= float(self.args.lr) * float(self.args.local_step) * self.L_k * self.beta * client_diff[key].data
+                client_state_dict[key].data -= 0.5 *  global_lr * reg_param * self.beta * client_diff[key].data
 
-            set_peft_model_state_dict(self.model, client_state_dict, "default")
+            # set_peft_model_state_dict(self.model, client_state_dict, "default")
 
             # save the updated model
             save_dir = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}")
