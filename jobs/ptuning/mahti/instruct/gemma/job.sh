@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=mahti_fedit_instruct_t5
+#SBATCH --job-name=mahti_ptuning_instruct_gemma
 #SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
-#SBATCH --time=36:00:00
+#SBATCH --time=10:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/mahti_fedit_instruct_t5.out
-#SBATCH --error=logs/mahti_fedit_instruct_t5.err
+#SBATCH --output=logs/ptuning/instruct/gemma/out.out
+#SBATCH --error=logs/ptuning/instruct/gemma/out.err
 
 module --force purge
 module load pytorch
@@ -19,4 +19,4 @@ export PYTHONPATH=$PYTHONPATH:/projappl/project_2009050/torch/lib/python3.9/site
 echo "Current PYTHONPATH: $PYTHONPATH"
 python -c "import rouge; print('rouge module is installed and importable')"
 
-srun python main.py --fname ./configs/fedit/configs_fedit_instruct_t5.yaml
+srun python main.py --fname ./configs/ptuning/instruct/gemma/configs.yaml

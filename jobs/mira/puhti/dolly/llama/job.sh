@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
-#SBATCH --time=36:00:00
+#SBATCH --time=10:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --output=logs/fedit/dolly/llama/out.out
 #SBATCH --error=logs/fedit/dolly/llama/out.err
