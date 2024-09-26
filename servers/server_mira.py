@@ -65,7 +65,7 @@ class Server_mira(BaseServer):
 
         self.config = LoraConfig(
                     r=self.args.r,
-                    target_modules=['q_proj', 'k_proj', 'v_proj'],
+                    target_modules=target_modules,
                     lora_alpha=16,
                     lora_dropout=0.05,
                     bias="none",
