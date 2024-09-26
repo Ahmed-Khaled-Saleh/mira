@@ -106,7 +106,7 @@ class Server_ptuning(BaseServer):
 
                 client.initiate_local_training(self.output_dir)
                 
-                client.optimizer = SGD(client.model.parameters(),
+                client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
