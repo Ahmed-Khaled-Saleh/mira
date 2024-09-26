@@ -166,7 +166,7 @@ class Trainer:
         train_loss = []
         for _ in range(epochs):
 
-            if fed and self.client.args.name in ['ptuning']:
+            if fed and self.client.args.name in ['Na']:
                 avg_train_loss = self._run_epoch_fed(local_iters)
             else:
                 avg_train_loss = self._run_epoch()
