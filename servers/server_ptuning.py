@@ -210,7 +210,7 @@ class Server_ptuning(BaseServer):
             metrics = {}
             
             if not client.model:
-                client.model = deepcopy(self.model)
+                client.model = self.model
 
             trainer = Trainer(client)
 
