@@ -48,7 +48,7 @@ class Server_mira(BaseServer):
         b_symm = (b + b.T)/2
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
-        self.L_k = 1e-2
+        self.L_k = 1e-3
         self.beta = 1
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
@@ -238,7 +238,7 @@ class Server_mira(BaseServer):
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
                     # self.alk_connection[int(client_id)][int(other_client_id)] = self.get_alk()
-                    weight = self.get_alk()
+                    weight = self.alk_connection[int(client_id)][int(other_client_id)]
                     for key in client_state_dict.keys():
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
