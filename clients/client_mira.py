@@ -62,13 +62,13 @@ class Client_mira(BaseClient):
         self.task = self.task if isinstance(self.task, str) else self.task[0]
         self.train_stat = {}
         self.test_stats = {}
-        self.output_dir = self.args.output_dir
-        self.local_output_dir = os.path.join(self.output_dir, "trainer_saved", "local_output_{}".format(self.idx))
+        # self.output_dir = self.args.output_dir
 
 
     
-    def initiate_local_training(self):
+    def initiate_local_training(self, out_dir):
         # self.model.config.use_cache = False
+        self.output_dir = out_dir
         self.params_dict_old = deepcopy(
             OrderedDict((name, param.detach()) for name, param in self.model.named_parameters() if
                         "default" in name))

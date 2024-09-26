@@ -5,6 +5,7 @@ import math
 from copy import deepcopy
 from collections import defaultdict
 from tqdm import tqdm
+import datetime
 
 import torch
 from torch.optim import AdamW
@@ -39,6 +40,7 @@ class Server_mira(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         self.output_dir = self.args.output_dir
+        self.output_dir += datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.quant_config = BitsAndBytesConfig(
             load_in_8bit=True,
 
@@ -134,11 +136,10 @@ class Server_mira(BaseServer):
                                               "default")
                     # client.model.load_state_dict(torch.load(model_path, map_location=self.device))                    
                 
-                client.initiate_local_training()
+                client.initiate_local_training(self.output_dir)
                 
                 client.optimizer = Adam(client.model.parameters(),
                                         lr= float(self.args.lr),
-                                        # momentum=0.9,
                                         weight_decay= float(self.args.weight_decay))
                 
                 trainer = Trainer(client)
