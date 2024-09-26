@@ -6,7 +6,7 @@ from copy import deepcopy
 from tqdm import tqdm
 
 import torch
-from torch.optim import AdamW
+from torch.optim import AdamW, Adam, SGD
 from transformers import AutoModelForCausalLM, TrainingArguments, Trainer, DataCollatorForSeq2Seq
 from peft import (
     get_peft_model_state_dict,
@@ -105,7 +105,7 @@ class Server_ptuning(BaseServer):
 
                 client.initiate_local_training()
                 
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = SGD(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 

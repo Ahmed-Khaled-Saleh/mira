@@ -243,15 +243,19 @@ class Trainer:
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
 
-                acc_total_train += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)
-                
-                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / len(batch['input_ids'])}")
-                progress_bar_train.update(1)
+                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
 
-                num_train += len(batch['input_ids'])
+                if r_score != 0:
+                    num_train += 1
+                    acc_total_train += r_score
+
                 if num_train == 0:
                     num_train = 1e-10
-            
+                
+                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / num_train}")
+                progress_bar_train.update(1)
+
+           
         print(f'Client {self.client.idx} accuracy is : {acc_total_train / num_train}')
         print("****************************************")
         return acc_total_train / num_train
@@ -282,13 +286,18 @@ class Trainer:
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
 
-                acc_total_eval += rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+                if r_score != 0:
+                    num_eval += 1
+                    acc_total_eval += r_score
 
-                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / len(batch['input_ids'])}")
-                progress_bar_eval.update(1)
-                num_eval += len(batch['input_ids'])
                 if num_eval == 0:
                     num_eval = 1e-10
+
+                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / num_eval}")
+                progress_bar_eval.update(1)
+                
+                
 
         print(f'Client {self.client.idx} accuracy is : {acc_total_eval / num_eval}')
         print("****************************************")
