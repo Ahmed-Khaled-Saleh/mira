@@ -28,7 +28,7 @@ from torch.optim import AdamW, Adam
 from servers.base_server import BaseServer
 from optimizers.mezo_torch import MeZOOptimizer
 from optimizers.mezo_optimizer import MeZOFramework
-
+import datetime
 class Server_fedit(BaseServer):
     def __init__(self, args, tokenizer, candidate_seeds, log_dir, **kwargs):
         self.args = args
@@ -36,6 +36,7 @@ class Server_fedit(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         self.output_dir = self.args.output_dir
+        self.output_dir += datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
@@ -105,7 +106,7 @@ class Server_fedit(BaseServer):
                     client.model = deepcopy(self.model)
                 client.model = client.model.to(self.device)
 
-                client.initiate_local_training()
+                client.initiate_local_training(self.output_dir)
                 
                 client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),

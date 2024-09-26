@@ -20,7 +20,7 @@ from peft import (
     prepare_model_for_kbit_training,
 )
 from peft import PromptEncoderConfig
-
+import datetime
 
 from transformers import BitsAndBytesConfig
 from torch.nn.functional import normalize
@@ -41,6 +41,7 @@ class Server_ptuning(BaseServer):
         self.tokenizer = tokenizer
         self.log_dir = log_dir
         self.output_dir = self.args.output_dir
+        self.output_dir += datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
@@ -103,7 +104,7 @@ class Server_ptuning(BaseServer):
                     client.model = deepcopy(self.model)
                 client.model = client.model.to(self.device)
 
-                client.initiate_local_training()
+                client.initiate_local_training(self.output_dir)
                 
                 client.optimizer = SGD(client.model.parameters(),
                                         lr= float(self.args.lr),

@@ -67,8 +67,9 @@ class Client_ptuning(BaseClient):
 
 
     
-    def initiate_local_training(self):
+    def initiate_local_training(self, out_dir):
         # self.model.config.use_cache = False
+        self.output_dir = out_dir
         self.params_dict_old = deepcopy(
             OrderedDict((name, param.detach()) for name, param in self.model.named_parameters() if
                         "default" in name))
