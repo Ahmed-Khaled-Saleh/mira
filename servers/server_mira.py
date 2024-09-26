@@ -50,7 +50,7 @@ class Server_mira(BaseServer):
         b_symm = (b + b.T)/2
         b_symm[b_symm < 0.25] = 0
         self.alk_connection = b_symm
-        self.L_k = 1e-1
+        self.L_k = 1e-2
         self.beta = 1
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
@@ -244,7 +244,7 @@ class Server_mira(BaseServer):
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
 
             for key in client_state_dict:
-                client_state_dict[key].data -= 0.5 *  global_lr * reg_param * self.beta * client_diff[key].data
+                client_state_dict[key].data -=  global_lr * reg_param * self.beta * client_diff[key].data
 
             # set_peft_model_state_dict(self.model, client_state_dict, "default")
 
