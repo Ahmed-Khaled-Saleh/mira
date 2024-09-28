@@ -161,8 +161,9 @@ class Trainer:
         if callbacks:
             callbacks[0](memory_record_dic)
 
-        val_loss = self.eval()
-
+        init_val_loss = self.eval()
+        val_loss = [init_val_loss]
+        
         train_loss = []
         for _ in range(epochs):
 
@@ -170,6 +171,9 @@ class Trainer:
                 avg_train_loss = self._run_epoch_fed(local_iters)
             else:
                 avg_train_loss = self._run_epoch()
+            
+            avg_val_loss = self.eval()
+            val_loss.append(avg_val_loss)
 
             train_loss.append(avg_train_loss)
 
@@ -189,7 +193,7 @@ class Trainer:
         
         self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
-        
+        num_eval = 0
         def _run_batch(batch):
             out = self.client.model(**batch)
             loss = self.client.criterion(out)
@@ -206,16 +210,22 @@ class Trainer:
                     'attention_mask': batch['attention_mask'].to(self.client.device) 
                 }
                 
-                loss = _run_batch(batch)
+
+                if num_eval == 0:
+                    num_eval = 1e-10
+
+                loss = _run_batch(batch)                 
+
                 print(f"Client {self.client.idx}'s Batch loss inside eval() : {loss}")
 
                 if (not torch.isnan(loss)) and (self.client.args.grad_clip <= 0 or loss != 0.0):
-                    total_loss += loss.item()              
+                    total_loss += loss.item()  
+                    num_eval += len(batch['input_ids'])            
                 
             print(f'Client {self.client.idx} Eval loss is : {total_loss / len(self.client.eval_loader)}')
             print("****************************************")
                 
-        return (total_loss / len(self.client.eval_loader))
+        return total_loss / num_eval
     
     def train_generate(self):
         print("****************************************")
@@ -287,7 +297,7 @@ class Trainer:
                 ref_ids = label_ids[0]
 
                 r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
-                if r_score != 0:
+                if int(r_score) != 0:
                     num_eval += 1
                     acc_total_eval += r_score
 
@@ -297,8 +307,6 @@ class Trainer:
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / num_eval}")
                 progress_bar_eval.update(1)
                 
-                
-
         print(f'Client {self.client.idx} accuracy is : {acc_total_eval / num_eval}')
         print("****************************************")
         return acc_total_eval / num_eval
