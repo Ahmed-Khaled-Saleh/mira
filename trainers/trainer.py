@@ -252,8 +252,12 @@ class Trainer:
                 )
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
-
-                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+                try:
+                    r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
+                except RuntimeError:
+                    print("*****INPUT: ", input_ids)
+                    print("*****HYP: ", hyp_ids)
+                    print("*****LABEL: ", ref_ids)
 
                 if r_score != 0:
                     num_train += 1
