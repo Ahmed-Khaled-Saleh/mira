@@ -7,8 +7,8 @@
 #SBATCH --mem=100G
 #SBATCH --time=10:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/fedit_mahti_dolly_gemma.out
-#SBATCH --error=logs/fedit_mahti_dolly_gemma.err
+#SBATCH --output=logs/fedit/dolly/gemma/out.out
+#SBATCH --error=logs/fedit/dolly/gemma/out.err
 
 module --force purge
 module load pytorch
