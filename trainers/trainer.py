@@ -252,14 +252,14 @@ class Trainer:
                 )
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
-                try:
-                    r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
-                except RuntimeError:
-                    print("*****INPUT: ", input_ids)
-                    print("*****HYP: ", hyp_ids)
-                    print("*****LABEL: ", ref_ids)
+                input_length = input_ids.shape[1]
+                print(f"Input length: {input_length} tokens")
+                max_new_tokens = 1024 - input_length
+                print(f"Maximum new tokens that can be generated: {max_new_tokens}")
+                    
+                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
 
-                if r_score != 0:
+                if r_score != float(0):
                     num_train += 1
                     acc_total_train += r_score
 
@@ -301,7 +301,7 @@ class Trainer:
                 ref_ids = label_ids[0]
 
                 r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
-                if int(r_score) != 0:
+                if r_score != float(0):
                     num_eval += 1
                     acc_total_eval += r_score
 
