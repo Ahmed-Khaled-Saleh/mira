@@ -47,7 +47,7 @@ class Server_fedit(BaseServer):
         if self.args.model in ['openai-community/gpt2']:
             target_modules = ['c_attn','c_proj']
         else:
-            target_modules = ['q_proj',]
+            target_modules = ['q_proj', 'k_proj', 'v_proj']
 
         self.config = LoraConfig(
                     r=self.args.r,
