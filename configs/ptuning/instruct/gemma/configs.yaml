@@ -17,7 +17,7 @@
   lr: 1e-4
   weight_decay: 1e-1
   grad_clip: -100.0
-  K: 4096
+  K: 4090
   zo_eps: 0.0005
   bias_sampling: false
   bias_loss_clip: 1000.0
