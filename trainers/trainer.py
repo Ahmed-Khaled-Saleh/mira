@@ -31,7 +31,11 @@ class Trainer:
 
         def closure():
             out = self.client.model(**batch)
-            loss = self.client.criterion(out)
+            try:
+                loss = self.client.criterion(out)
+            except:
+                print("Error in loss calculation")
+                return torch.tensor(float(0), device=out.device)
             if torch.isnan(loss):
                 print("Warning: NaN loss detected in closure")
                 return torch.tensor(float(0), device=loss.device)
