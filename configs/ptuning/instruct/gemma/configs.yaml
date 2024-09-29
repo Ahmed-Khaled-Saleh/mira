@@ -24,7 +24,7 @@
   grad_initial: 0.0
   device: 0
   log: false
-  log_root: 'logs/ptuning/instruct/llama'
+  log_root: 'logs/ptuning/instruct/gemma'
   output_dir: '/scratch/project_2009050/ptuning/instruct/gemma'
   seed: 42
   eval_metric: 'rouge'
