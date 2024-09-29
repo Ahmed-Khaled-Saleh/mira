@@ -36,7 +36,7 @@ class Trainer:
                 loss = self.client.criterion(out)
             except:
                 print("Error in loss calculation")
-                return torch.tensor(float(0), device=out.device)
+                return torch.tensor(float(0), device=self.client.device)
             if torch.isnan(loss):
                 print("Warning: NaN loss detected in closure")
                 return torch.tensor(float(0), device=loss.device)
@@ -206,7 +206,7 @@ class Trainer:
             except:
                 print("Error in loss calculation in Eval() for client ", self.client.idx)
 
-                return torch.tensor(float(0), device=out.device)
+                return torch.tensor(float(0), device=self.client.device)
             if torch.isnan(loss):
                 return torch.tensor(float(0), device=loss.device)
             return loss
