@@ -30,8 +30,9 @@ class Trainer:
             self.client.optimizer.zero_grad()
 
         def closure():
-            out = self.client.model(**batch)
+            
             try:
+                out = self.client.model(**batch)
                 loss = self.client.criterion(out)
             except:
                 print("Error in loss calculation")
@@ -199,8 +200,13 @@ class Trainer:
         self.client.model.eval()
         num_eval = 0
         def _run_batch(batch):
-            out = self.client.model(**batch)
-            loss = self.client.criterion(out)
+            try:
+                out = self.client.model(**batch)
+                loss = self.client.criterion(out)
+            except:
+                print("Error in loss calculation in Eval() for client ", self.client.idx)
+
+                return torch.tensor(float(0), device=out.device)
             if torch.isnan(loss):
                 return torch.tensor(float(0), device=loss.device)
             return loss
