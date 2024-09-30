@@ -2,8 +2,8 @@
   num_clients: 80
   num_clients_per_task: 10
   m: 0.1
-  rounds: 60
-  local_step: 5
+  rounds: 100
+  local_step: 10
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'openai-community/gpt2'
-  lr: 1e-3
+  lr: 1e-4
   weight_decay: 1e-2
   grad_clip: -100.0
   K: 4096
