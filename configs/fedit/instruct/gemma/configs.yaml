@@ -2,7 +2,7 @@
   num_clients: 80
   num_clients_per_task: 10
   m: 0.1
-  rounds: 60
+  rounds: 100
   local_step: 10
   batch_or_epoch: 'batch'
   equal_weight: false
