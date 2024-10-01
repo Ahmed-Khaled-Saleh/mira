@@ -31,4 +31,4 @@
   save: false
   r: 16
   project: 'MIRA2'
-  lambda_: 0.5
+  lambda_: 0.8
