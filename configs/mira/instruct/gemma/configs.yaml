@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'openai-community/gpt2'
-  lr: 3e-5
+  lr: 3e-4
   weight_decay: 1e-1
   grad_clip: -100.0
   K: 4096
