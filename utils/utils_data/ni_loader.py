@@ -161,8 +161,8 @@ def get_instruction_dataset(args, tokenizer, only_eval=False):
                 for item in instances:
                     # only take the first output into consideration
                     data.append((instruct, item['input'], item['output'][0], task))
-                dataset = LLMDataset(data, tokenizer, use_prompts=False)
-                generation_dataset = LLMDataset(data, tokenizer, use_prompts=False, generation=True)
+                dataset = LLMDataset(data, tokenizer, use_prompts=True)
+                generation_dataset = LLMDataset(data, tokenizer, use_prompts=True, generation=True)
                 
                 # Split dataset into train and validation sets
                 train_size = int(0.8 * len(dataset))
