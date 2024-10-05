@@ -18,6 +18,7 @@ from torch.optim import Adam
 import bitsandbytes as bnb
 from peft import (
     LoraConfig,
+    LoHaConfig,
     get_peft_model,
     prepare_model_for_kbit_training,
 )
@@ -63,12 +64,20 @@ class Server_mira(BaseServer):
         else:
             target_modules = ['q_proj', 'k_proj', 'v_proj']
 
-        self.config = LoraConfig(
+        # self.config = LoraConfig(
+        #             r=self.args.r,
+        #             target_modules=target_modules,
+        #             lora_alpha=16,
+        #             lora_dropout=0.05,
+        #             bias="none",
+        #             task_type="CAUSAL_LM",
+        #         )
+        self.config = LoHaConfig(
                     r=self.args.r,
                     target_modules=target_modules,
-                    lora_alpha=16,
-                    lora_dropout=0.05,
-                    bias="none",
+                    alpha=16,
+                    module_dropout=0.05,
+                    # bias="none",
                     task_type="CAUSAL_LM",
                 )
         
