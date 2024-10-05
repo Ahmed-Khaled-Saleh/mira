@@ -20,7 +20,6 @@ from peft import (
     LoraConfig,
     LoHaConfig,
     get_peft_model,
-    VBLoRAConfig,
     prepare_model_for_kbit_training,
 )
 from transformers import BitsAndBytesConfig
@@ -73,12 +72,12 @@ class Server_mira(BaseServer):
         #             bias="none",
         #             task_type="CAUSAL_LM",
         #         )
-        self.config = VBLoRAConfig(
-                    r=4,
+        self.config = LoHaConfig(
+                    r=self.args.r,
                     target_modules=target_modules,
-                    num_vectors=60,
-                    vector_length=256,
-                    save_only_topk_weights=True,
+                    alpha=16,
+                    module_dropout=0.05,
+                    # bias="none",
                     task_type="CAUSAL_LM",
                 )
         
