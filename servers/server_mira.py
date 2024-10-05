@@ -20,6 +20,7 @@ from peft import (
     LoraConfig,
     LoHaConfig,
     get_peft_model,
+    VBLoRAConfig,
     prepare_model_for_kbit_training,
 )
 from transformers import BitsAndBytesConfig
@@ -72,12 +73,12 @@ class Server_mira(BaseServer):
         #             bias="none",
         #             task_type="CAUSAL_LM",
         #         )
-        self.config = LoHaConfig(
-                    r=self.args.r,
+        self.config = VBLoRAConfig(
+                    r=4,
                     target_modules=target_modules,
-                    alpha=16,
-                    module_dropout=0.05,
-                    # bias="none",
+                    num_vectors=60,
+                    vector_length=256,
+                    save_only_topk_weights=True,
                     task_type="CAUSAL_LM",
                 )
         
@@ -152,7 +153,7 @@ class Server_mira(BaseServer):
                 
                 client.initiate_local_training(self.output_dir)
                 
-                client.optimizer = SGD(client.model.parameters(),
+                client.optimizer = AdamW(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
