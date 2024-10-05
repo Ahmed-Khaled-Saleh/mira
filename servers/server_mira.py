@@ -73,10 +73,10 @@ class Server_mira(BaseServer):
         #             task_type="CAUSAL_LM",
         #         )
         self.config = LoHaConfig(
-                    r=self.args.r,
+                    r=8,
                     target_modules=target_modules,
-                    alpha=16,
-                    module_dropout=0.05,
+                    alpha=32,
+                    module_dropout=0.0,
                     # bias="none",
                     task_type="CAUSAL_LM",
                 )
