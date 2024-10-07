@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'openai-community/gpt2'
+  model: 'google/gemma-2-2b-it'
   lr: 3e-4
   weight_decay: 1e-2
   grad_clip: -100.0
@@ -32,3 +32,4 @@
   r: 16
   project: 'MIRA2'
   lambda_: 0.8
+  hf_cache: '/scratch/project_2009050/'

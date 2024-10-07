@@ -53,16 +53,22 @@ class Server_mira(BaseServer):
         self.alk_connection = b_symm
         self.L_k = self.args.lambda_
         self.beta = 1
+
+        if self.args.model in ['openai-community/gpt2']:
+            target_modules = ['c_attn','c_proj']
+            hf_cache = self.args.hf_cache
+        else:
+            target_modules = ['q_proj', 'k_proj', 'v_proj']
+            hf_cache = self.args.hf_cache
+
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='cpu',
-                                                          token=self.args.hf_secret)
+                                                          token=self.args.hf_secret,
+                                                          cache_dir=hf_cache)
 
-        if self.args.model in ['openai-community/gpt2']:
-            target_modules = ['c_attn','c_proj']
-        else:
-            target_modules = ['q_proj', 'k_proj', 'v_proj']
+        
 
         # self.config = LoraConfig(
         #             r=self.args.r,
@@ -152,7 +158,7 @@ class Server_mira(BaseServer):
                 
                 client.initiate_local_training(self.output_dir)
                 
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = Adam(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
