@@ -127,7 +127,7 @@ class Server_fedit(BaseServer):
                                                     epochs= epochs,
                                                     local_iters= local_iters,
                                                     memory_record_dic= memory_record_dic,
-                                                    callbacks=[empty_cach, log_memory])
+                                                    callbacks=[])
                 
                 train_loss = np.array(train_loss).mean()
                 val_loss = np.array(val_loss).mean()
