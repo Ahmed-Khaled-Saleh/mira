@@ -66,7 +66,7 @@ class Server_mira(BaseServer):
                                                           trust_remote_code=True,
                                                           device_map='cpu',
                                                           token=self.args.hf_secret,
-                                                          )
+                                                          cache_dir=hf_cache)
 
         
 
@@ -79,7 +79,7 @@ class Server_mira(BaseServer):
                     task_type="CAUSAL_LM",
                 )
         # self.config = LoHaConfig(
-        #             r=self.args.r,
+        #             r=8,
         #             target_modules=target_modules,
         #             alpha=32,
         #             module_dropout=0.0,
