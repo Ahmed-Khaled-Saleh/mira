@@ -70,22 +70,22 @@ class Server_mira(BaseServer):
 
         
 
-        # self.config = LoraConfig(
-        #             r=self.args.r,
-        #             target_modules=target_modules,
-        #             lora_alpha=16,
-        #             lora_dropout=0.05,
-        #             bias="none",
-        #             task_type="CAUSAL_LM",
-        #         )
-        self.config = LoHaConfig(
-                    r=8,
+        self.config = LoraConfig(
+                    r=self.args.r,
                     target_modules=target_modules,
-                    alpha=32,
-                    module_dropout=0.0,
-                    # bias="none",
+                    lora_alpha=16,
+                    lora_dropout=0.05,
+                    bias="none",
                     task_type="CAUSAL_LM",
                 )
+        # self.config = LoHaConfig(
+        #             r=self.args.r,
+        #             target_modules=target_modules,
+        #             alpha=32,
+        #             module_dropout=0.0,
+        #             # bias="none",
+        #             task_type="CAUSAL_LM",
+        #         )
         
         self.model = get_peft_model(self.model, self.config)
         self.model.resize_token_embeddings(len(self.tokenizer))
