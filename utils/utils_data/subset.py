@@ -22,7 +22,7 @@ def subset(args, raw_datasets):
 
 def get_tokenizer(args):
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True, token=args.hf_secret)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True, token=args.hf_secret, padding_side='left')
     
     special_tokens = dict()
     if tokenizer.pad_token is None:

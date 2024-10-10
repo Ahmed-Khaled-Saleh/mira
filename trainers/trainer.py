@@ -249,7 +249,9 @@ class Trainer:
         num_train = 0
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
-                
+                print("INPUT_IDS: ", batch['input_ids'])
+                print("device: ", self.client.device)
+                print("dtype, shape: ", batch['input_ids'].dtype, batch['input_ids'].shape)
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
