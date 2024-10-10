@@ -23,7 +23,7 @@ class Trainer:
         self.client.train_loader_genr = self.prepare_dataloader(self.client.train_ds_genr, self.client.args.batch_size, self.client.data_collator)
         self.client.eval_loader_genr = self.prepare_dataloader(self.client.eval_ds_genr, self.client.args.batch_size, self.client.data_collator)
         self.client.train_iterator = iter(self.client.train_loader)
-        
+        self.client.model.generation_config.pad_token_id = self.client.tokenizer.pad_token_id
         
     def _run_batch(self, batch):
         if not isinstance(self.client.optimizer, MeZOFramework):

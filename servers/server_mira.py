@@ -78,14 +78,6 @@ class Server_mira(BaseServer):
                     bias="none",
                     task_type="CAUSAL_LM",
                 )
-        # self.config = LoHaConfig(
-        #             r=8,
-        #             target_modules=target_modules,
-        #             alpha=32,
-        #             module_dropout=0.0,
-        #             # bias="none",
-        #             task_type="CAUSAL_LM",
-        #         )
         
         self.model = get_peft_model(self.model, self.config)
         self.model.resize_token_embeddings(len(self.tokenizer))
