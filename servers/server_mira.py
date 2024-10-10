@@ -66,7 +66,7 @@ class Server_mira(BaseServer):
                                                           trust_remote_code=True,
                                                           device_map='cpu',
                                                           token=self.args.hf_secret,
-                                                          cache_dir=hf_cache)
+                                                          )
 
         
 
