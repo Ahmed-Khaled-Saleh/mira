@@ -32,3 +32,4 @@
   r: 16
   project: 'MIRA2'
   lambda_: 0.5
+  hf_cache: '/scratch/project_2009050/'
