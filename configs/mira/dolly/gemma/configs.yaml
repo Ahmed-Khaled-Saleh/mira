@@ -14,7 +14,7 @@
   zerotask: 7
   dataset_subsample: 1.0
   model: 'google/gemma-2-2b-it'
-  lr: 3e-4
+  lr: 3e-5
   weight_decay: 1e-2
   grad_clip: -100.0
   K: 4096
