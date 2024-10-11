@@ -262,7 +262,6 @@ class Trainer:
                     attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
-                    skip_special_tokens=True
                 )
             
                 hyp_ids = output_ids[0][len(input_ids[0]):]
@@ -313,7 +312,6 @@ class Trainer:
                     attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
-                    skip_special_tokens=True
                 )
                 print("Error in eval_generate for client ", self.client.idx)
 
