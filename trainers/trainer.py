@@ -287,6 +287,8 @@ class Trainer:
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / num_train}")
                 progress_bar_train.update(1)
 
+            if num_train == 0:
+                num_train = 1e-10
            
         print(f'Client {self.client.idx} accuracy is : {acc_total_train / num_train}')
         print("****************************************")
