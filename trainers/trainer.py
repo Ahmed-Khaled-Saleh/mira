@@ -251,23 +251,20 @@ class Trainer:
         print("model_dtype: ", model_dtype)
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
-                try:
-                    print("INPUT_IDS: ", batch['input_ids'])
-                    print("device: ", self.client.device)
-                    print("dtype, shape: ", batch['input_ids'].dtype, batch['input_ids'].shape)
-                    input_ids = batch['input_ids'].to(self.client.device)
-                    label_ids = batch['labels'].to(self.client.device)
-                    attention_mask=batch['attention_mask'].to(self.client.device)
-                    output_ids = self.client.model.generate(
-                        input_ids=input_ids,
-                        attention_mask=attention_mask,
-                        max_new_tokens=128,
-                        num_beams=1,
-                        skip_special_tokens=True
-                    )
-                except:
-                    print("Error in train_generate for client ", self.client.idx)
-                    continue
+                print("INPUT_IDS: ", batch['input_ids'])
+                print("device: ", self.client.device)
+                print("dtype, shape: ", batch['input_ids'].dtype, batch['input_ids'].shape)
+                input_ids = batch['input_ids'].to(self.client.device)
+                label_ids = batch['labels'].to(self.client.device)
+                attention_mask=batch['attention_mask'].to(self.client.device)
+                output_ids = self.client.model.generate(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    max_new_tokens=128,
+                    num_beams=1,
+                    skip_special_tokens=True
+                )
+            
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
                 input_length = input_ids.shape[1]
@@ -308,20 +305,17 @@ class Trainer:
         print("model_dtype: ", model_dtype)
         with torch.no_grad():
             for batch in self.client.eval_loader_genr:
-                try:
-                    input_ids = batch['input_ids'].to(self.client.device)
-                    label_ids = batch['labels'].to(self.client.device)
-                    attention_mask=batch['attention_mask'].to(self.client.device)
-                    output_ids = self.client.model.generate(
-                        input_ids=input_ids,
-                        attention_mask=attention_mask,
-                        max_new_tokens=128,
-                        num_beams=1,
-                        skip_special_tokens=True
-                    )
-                except:
-                    print("Error in eval_generate for client ", self.client.idx)
-                    continue
+                input_ids = batch['input_ids'].to(self.client.device)
+                label_ids = batch['labels'].to(self.client.device)
+                attention_mask=batch['attention_mask'].to(self.client.device)
+                output_ids = self.client.model.generate(
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    max_new_tokens=128,
+                    num_beams=1,
+                    skip_special_tokens=True
+                )
+                print("Error in eval_generate for client ", self.client.idx)
 
                 hyp_ids = output_ids[0][len(input_ids[0]):]
                 ref_ids = label_ids[0]
