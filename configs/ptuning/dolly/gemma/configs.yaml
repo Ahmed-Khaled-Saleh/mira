@@ -2,7 +2,7 @@
   num_clients: 80
   num_clients_per_task: 10
   m: 0.1
-  rounds: 60
+  rounds: 40
   local_step: 10
   batch_or_epoch: 'batch'
   equal_weight: false
@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'google/gemma-2-2b-it'
+  model: 'openlm-research/open_llama_3b_v2'
   lr: 1e-4
   weight_decay: 1e-2
   grad_clip: -100.0
