@@ -331,7 +331,9 @@ class Trainer:
 
                 print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / num_eval}")
                 progress_bar_eval.update(1)
-                
+            
+            if num_eval == 0:
+                num_eval = 1e-10
         print(f'Client {self.client.idx} accuracy is : {acc_total_eval / num_eval}')
         print("****************************************")
         return acc_total_eval / num_eval
