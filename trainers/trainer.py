@@ -261,6 +261,7 @@ class Trainer:
                         attention_mask=attention_mask,
                         max_new_tokens=128,
                         num_beams=1,
+                        skip_special_tokens=True
                     )
                 except:
                     print("Error in train_generate for client ", self.client.idx)
@@ -311,6 +312,7 @@ class Trainer:
                         attention_mask=attention_mask,
                         max_new_tokens=128,
                         num_beams=1,
+                        skip_special_tokens=True
                     )
                 except:
                     print("Error in eval_generate for client ", self.client.idx)

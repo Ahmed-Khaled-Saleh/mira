@@ -121,9 +121,9 @@ class MTLDataSet(Dataset):
             tokenizer(
                 text,
                 return_tensors="pt",
-                padding="longest",
                 max_length=tokenizer.model_max_length,
                 truncation=True,
+                padding=True,
             ) for text in strings
         ]
         input_ids = labels = [
