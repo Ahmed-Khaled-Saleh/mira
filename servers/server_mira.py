@@ -127,6 +127,7 @@ class Server_mira(BaseServer):
             lst_global_metrics = []
             print("Starting round ", t)
             print("****************************************")
+            train_acc, eval_acc = self.eval_clients(self.client_list)
 
             for client in selected_client:
                 print("Client ", client.idx, " is training")
