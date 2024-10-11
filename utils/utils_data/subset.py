@@ -37,8 +37,10 @@ def get_tokenizer(args):
     if args.model in ['openai-community/gpt2']:
         tokenizer.pad_token = tokenizer.eos_token
 
+    if special_tokens:
+        tokenizer.add_special_tokens(special_tokens)
+
     tokenizer.model_max_length = args.max_length
-    tokenizer.add_special_tokens(special_tokens)
     
 
     return tokenizer
