@@ -248,7 +248,7 @@ class Trainer:
         acc_total_train = 0.0
         num_train = 0
         model_dtype = next(self.client.model.parameters()).dtype
-
+        print("model_dtype: ", model_dtype)
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
                 try:
@@ -305,6 +305,7 @@ class Trainer:
         acc_total_eval = 0.0
         num_eval = 0
         model_dtype = next(self.client.model.parameters()).dtype
+        print("model_dtype: ", model_dtype)
         with torch.no_grad():
             for batch in self.client.eval_loader_genr:
                 try:
