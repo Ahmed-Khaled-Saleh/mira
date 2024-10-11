@@ -37,12 +37,12 @@ class Server_fedit(BaseServer):
         self.log_dir = log_dir
         self.output_dir = self.args.output_dir
         self.output_dir += datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
+        print("secret ==: ", self.args.hf_secret)
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
                                                           torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='cpu',
-                                                          token=self.args.hf_secret)
+                                                          token="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")
         
         if self.args.model in ['openai-community/gpt2']:
             target_modules = ['c_attn','c_proj']
