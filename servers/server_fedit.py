@@ -100,7 +100,7 @@ class Server_fedit(BaseServer):
             print("length of client list: ", len(self.client_list))
             print("length of client indices rounds: ", len(client_indices_rounds[t-1]))
             selected_client = [self.client_list[i] for i in client_indices_rounds[t-1]]
-            train_acc, eval_acc = self.eval_clients(self.client_list)
+            
             lst_global_metrics = []
             print("Starting round ", t)
             print("****************************************")
