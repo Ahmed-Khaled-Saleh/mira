@@ -22,7 +22,8 @@ def subset(args, raw_datasets):
 
 def get_tokenizer(args):
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True, token="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", padding_side='left')
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False, token="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", padding_side='left')
+
     
     # special_tokens = dict()
     # if tokenizer.pad_token is None:
@@ -41,7 +42,9 @@ def get_tokenizer(args):
     #     tokenizer.add_special_tokens(special_tokens)
 
     # tokenizer.model_max_length = args.max_length
-    
+    if tokenizer.pad_token is None:
+        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+
 
     return tokenizer
 
