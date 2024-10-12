@@ -3,11 +3,11 @@
   num_clients_per_task: 10
   m: 0.1
   rounds: 1
-  local_step: 10
+  local_step: 5
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
-  batch_size: 2
+  batch_size: 1
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'
