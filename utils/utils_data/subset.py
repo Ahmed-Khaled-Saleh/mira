@@ -22,25 +22,25 @@ def subset(args, raw_datasets):
 
 def get_tokenizer(args):
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False, token="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", padding_side='left')
+    tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=True, token="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", padding_side='left')
     
-    special_tokens = dict()
-    if tokenizer.pad_token is None:
-        special_tokens["pad_token"] = DefaultToken.PAD_TOKEN.value
-    if tokenizer.eos_token is None:
-        special_tokens["eos_token"] = DefaultToken.EOS_TOKEN.value
-    if tokenizer.bos_token is None:
-        special_tokens["bos_token"] = DefaultToken.BOS_TOKEN.value
-    if tokenizer.unk_token is None:
-        special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
+    # special_tokens = dict()
+    # if tokenizer.pad_token is None:
+    #     special_tokens["pad_token"] = DefaultToken.PAD_TOKEN.value
+    # if tokenizer.eos_token is None:
+    #     special_tokens["eos_token"] = DefaultToken.EOS_TOKEN.value
+    # if tokenizer.bos_token is None:
+    #     special_tokens["bos_token"] = DefaultToken.BOS_TOKEN.value
+    # if tokenizer.unk_token is None:
+    #     special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
         
-    if args.model in ['openai-community/gpt2']:
-        tokenizer.pad_token = tokenizer.eos_token
+    # if args.model in ['openai-community/gpt2']:
+    #     tokenizer.pad_token = tokenizer.eos_token
 
-    if special_tokens:
-        tokenizer.add_special_tokens(special_tokens)
+    # if special_tokens:
+    #     tokenizer.add_special_tokens(special_tokens)
 
-    tokenizer.model_max_length = args.max_length
+    # tokenizer.model_max_length = args.max_length
     
 
     return tokenizer

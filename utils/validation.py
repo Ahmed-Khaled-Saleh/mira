@@ -7,20 +7,29 @@ rouge = Rouge()
 
 def rouge_score(hyp_ids, ref_ids, tokenizer):
     hyps = torch.where(hyp_ids != -100, hyp_ids, tokenizer.pad_token_id)
-    hyps = [tokenizer.decode(hyps, skip_special_tokens=True)]
-    
-
-    if len(hyps[0]) == 0:
-        return 0.0
-    
     refs = torch.where(ref_ids != -100, ref_ids, tokenizer.pad_token_id)
-    refs = [tokenizer.decode(refs, skip_special_tokens=True)]
+
+    hyps = tokenizer.batch_decode(hyps, skip_special_tokens=True)
+    refs = tokenizer.batch_decode(refs, skip_special_tokens=True)
     
+    batch_rouge = 0
+    for i in range(len(hyps)):
+        if len(hyps[i].strip()) == 0:
+            continue
+        
+        else:
+            h = hyps[i].strip().lower()
+            r = refs[i].strip().lower()
+            try:
+                item_rouge = rouge.get_scores(h, r)[0]['rouge-l']['f']
+            except ValueError:
+                print("Error in calculating rouge score")
+                item_rouge = 0
+
+            batch_rouge += item_rouge
+
+    rouge_score = batch_rouge / len(hyps)
     
-    try:
-        rouge_score = rouge.get_scores(hyps, refs)[0]['rouge-l']['f']
-    except ValueError:
-        return 0.0
     return rouge_score
 
 

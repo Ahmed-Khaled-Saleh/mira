@@ -247,48 +247,32 @@ class Trainer:
         progress_bar_train = tqdm(range(len(self.client.train_loader_genr)))
         acc_total_train = 0.0
         num_train = 0
-        model_dtype = next(self.client.model.parameters()).dtype
-        print("model_dtype: ", model_dtype)
+
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
-                print("INPUT_IDS: ", batch['input_ids'])
-                print("device: ", self.client.device)
-                print("dtype, shape: ", batch['input_ids'].dtype, batch['input_ids'].shape)
+                
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
+                
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
                     attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
                 )
-            
-                hyp_ids = output_ids[0][len(input_ids[0]):]
-                ref_ids = label_ids[0]
-                input_length = input_ids.shape[1]
-                print(f"Input length: {input_length} tokens")
-                max_new_tokens = 1024 - input_length
-                print(f"Maximum new tokens that can be generated: {max_new_tokens}")
-                    
-                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
-
-                if r_score != float(0):
-                    num_train += 1
-                    acc_total_train += r_score
-
-                if num_train == 0:
-                    num_train = 1e-10
                 
-                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_train / num_train}")
-                progress_bar_train.update(1)
+                generated_ids = output_ids[:, len(input_ids[0]):] 
+                r_score = rouge_score(generated_ids, label_ids, self.client.tokenizer)  # noqa: F405
 
-            if num_train == 0:
-                num_train = 1e-10
+                acc_total_train += r_score
+                
+                print(f"Client {self.client.idx}'s Batch Rouge is : {r_score}")
+                progress_bar_train.update(1)
            
-        print(f'Client {self.client.idx} accuracy is : {acc_total_train / num_train}')
+        print(f'Client {self.client.idx} Rouge is : {acc_total_train / len(self.client.train_loader_genr)}')
         print("****************************************")
-        return acc_total_train / num_train
+        return acc_total_train / len(self.client.train_loader_genr)
     
     def eval_generate(self):
         print("****************************************")
@@ -299,41 +283,32 @@ class Trainer:
         
         progress_bar_eval = tqdm(range(len(self.client.eval_loader_genr)))
         acc_total_eval = 0.0
-        num_eval = 0
-        model_dtype = next(self.client.model.parameters()).dtype
-        print("model_dtype: ", model_dtype)
+
         with torch.no_grad():
             for batch in self.client.eval_loader_genr:
+
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
+
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
                     attention_mask=attention_mask,
                     max_new_tokens=128,
                     num_beams=1,
                 )
-                print("Error in eval_generate for client ", self.client.idx)
 
-                hyp_ids = output_ids[0][len(input_ids[0]):]
-                ref_ids = label_ids[0]
+                generated_ids = output_ids[:, len(input_ids[0]):] 
+                r_score = rouge_score(generated_ids, label_ids, self.client.tokenizer)  # noqa: F405
 
-                r_score = rouge_score(hyp_ids, ref_ids, self.client.tokenizer)  # noqa: F405
-                if r_score != float(0):
-                    num_eval += 1
-                    acc_total_eval += r_score
+                acc_total_eval += r_score
 
-                if num_eval == 0:
-                    num_eval = 1e-10
-
-                print(f"Client {self.client.idx}'s Batch accuracy is : {acc_total_eval / num_eval}")
+                print(f"Client {self.client.idx}'s Batch Rouge is : {r_score}")
                 progress_bar_eval.update(1)
-            
-            if num_eval == 0:
-                num_eval = 1e-10
-        print(f'Client {self.client.idx} accuracy is : {acc_total_eval / num_eval}')
+
+        print(f'Client {self.client.idx} Rouge is : {acc_total_eval / len(self.client.eval_loader_genr)}')
         print("****************************************")
-        return acc_total_eval / num_eval
+        return acc_total_eval / len(self.client.eval_loader_genr)
     
     def prepare_dataloader(self, dataset, batch_size: int, data_collator):
         return DataLoader(

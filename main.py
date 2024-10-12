@@ -20,6 +20,7 @@ from utils.helper_fuctions import (setup_seed,
                                    get_client_indices_rounds
                                    )
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+from huggingface_hub import login
 
 def federated_training(server,
                        client_indices_rounds,
@@ -39,6 +40,8 @@ def process_main(args_config_fname):
 
     args = argparse.Namespace(**experiment)
     args.hf_secret = hf_secret
+    login(token=args.hf_secret)
+    
     exp_nam = args.log_root.split('/')[1:]
     exp_name = '_'.join(exp_nam)
     run = wandb.init(project=args.project, name= exp_name, config=args)
