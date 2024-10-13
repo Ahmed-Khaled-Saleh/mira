@@ -3,17 +3,17 @@
   num_clients_per_task: 10
   m: 0.1
   rounds: 40
-  local_step: 10
+  local_step: 5
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
-  batch_size: 8
+  batch_size: 1
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'openlm-research/open_llama_3b_v2'
+  model: 'google/gemma-2-2b-it'
   lr: 1e-4
   weight_decay: 1e-2
   grad_clip: -100.0
