@@ -7,7 +7,7 @@
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
-  batch_size: 1
+  batch_size: 4
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'

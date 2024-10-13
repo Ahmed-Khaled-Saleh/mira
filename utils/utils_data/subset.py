@@ -35,15 +35,15 @@ def get_tokenizer(args):
     # if tokenizer.unk_token is None:
     #     special_tokens["unk_token"] = DefaultToken.UNK_TOKEN.value
         
-    # if args.model in ['openai-community/gpt2']:
-    #     tokenizer.pad_token = tokenizer.eos_token
+    if args.model in ['openai-community/gpt2-large']:
+        tokenizer.pad_token = tokenizer.eos_token
 
     # if special_tokens:
     #     tokenizer.add_special_tokens(special_tokens)
 
     # tokenizer.model_max_length = args.max_length
-    if tokenizer.pad_token is None:
-        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+    # if tokenizer.pad_token is None:
+    #     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
 
     return tokenizer

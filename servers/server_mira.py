@@ -54,7 +54,7 @@ class Server_mira(BaseServer):
         self.L_k = self.args.lambda_
         self.beta = 1
 
-        if self.args.model in ['openai-community/gpt2']:
+        if self.args.model in ['openai-community/gpt2-large']:
             target_modules = ['c_attn','c_proj']
             hf_cache = self.args.hf_cache
         else:
@@ -62,7 +62,6 @@ class Server_mira(BaseServer):
             hf_cache = self.args.hf_cache
 
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                          torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='cpu',
                                                           token=self.args.hf_secret,

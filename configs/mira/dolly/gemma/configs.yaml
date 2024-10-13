@@ -7,13 +7,13 @@
   batch_or_epoch: 'batch'
   equal_weight: false
   dataset: 'dolly'
-  batch_size: 1
+  batch_size: 4
   max_length: 1024
   use_prompts: true
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: openai-community/gpt2-large'
+  model: 'openai-community/gpt2-large'
   lr: 3e-5
   weight_decay: 1e-2
   grad_clip: -100.0

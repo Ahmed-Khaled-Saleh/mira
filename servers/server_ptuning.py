@@ -44,7 +44,6 @@ class Server_ptuning(BaseServer):
         self.output_dir += datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
-                                                          torch_dtype=torch.float16,
                                                           trust_remote_code=True,
                                                           device_map='cpu',
                                                           token=self.args.hf_secret)
