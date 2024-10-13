@@ -13,7 +13,7 @@
   iid: 'dir0.5'
   zerotask: 7
   dataset_subsample: 1.0
-  model: 'google/gemma-2-2b-it'
+  model: 'openai-community/gpt2-large'
   lr: 3e-5
   weight_decay: 1e-2
   grad_clip: -100.0
@@ -29,5 +29,5 @@
   seed: 42
   eval_metric: 'rouge'
   save: false
-  r: 16
+  r: 8
   project: 'MIRA2'

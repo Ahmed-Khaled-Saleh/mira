@@ -58,7 +58,7 @@ class Server_mira(BaseServer):
             target_modules = ['c_attn','c_proj']
             hf_cache = self.args.hf_cache
         else:
-            target_modules = ['q_proj', 'k_proj', 'v_proj']
+            target_modules = ['q_proj', ]
             hf_cache = self.args.hf_cache
 
         self.model = AutoModelForCausalLM.from_pretrained(self.args.model, 
@@ -73,7 +73,7 @@ class Server_mira(BaseServer):
         self.config = LoraConfig(
                     r=self.args.r,
                     target_modules=target_modules,
-                    lora_alpha=16,
+                    lora_alpha=8,
                     lora_dropout=0.05,
                     bias="none",
                     task_type="CAUSAL_LM",
