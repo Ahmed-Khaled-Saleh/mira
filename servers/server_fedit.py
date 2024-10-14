@@ -160,7 +160,9 @@ class Server_fedit(BaseServer):
                                         local_dataset_len_dict,
                                         t,
                                         )
-                        
+            
+            torch.save(self.model.state_dict(), os.path.join(self.output_dir, str(t), "pytorch_model.bin"))
+            
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
 

@@ -80,9 +80,6 @@ class Server_mira(BaseServer):
         
         self.model = get_peft_model(self.model, self.config)
         self.model.resize_token_embeddings(len(self.tokenizer))
-        self.lora_param_names = [name for name in self.model.state_dict().keys() if 'lora_A' in name or 'lora_B' in name]
-
-        self.seed_pool = {seed: 0.0 for seed in self.candidate_seeds}
         
         self.device = torch.device(f'cuda:{self.args.device}')
 
@@ -189,12 +186,6 @@ class Server_mira(BaseServer):
                 gc.collect()
                 torch.cuda.empty_cache()
             
-            # if self.model:
-            #     del self.model
-            #     import gc
-            #     gc.collect()
-            #     torch.cuda.empty_cache()
-            
             print("Collecting the weights of clients and performing aggregation")
             self.aggregate(
                             client_indices_rounds[t-1],
@@ -212,16 +203,19 @@ class Server_mira(BaseServer):
             
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
             
-            for client in selected_client:
-                if client.idx in latest_model_iter:
-                    to_del = os.path.join(self.output_dir, str(latest_model_iter[client.idx]), "local_output_{}".format(client.idx),
-                                            "pytorch_model.bin")
-                    if os.path.exists(to_del):
-                        os.remove(to_del)
+            # for client in selected_client:
+                # if client.idx in latest_model_iter:
+                #     to_del = os.path.join(self.output_dir, str(latest_model_iter[client.idx]), "local_output_{}".format(client.idx),
+                #                             "pytorch_model.bin")
+                #     if os.path.exists(to_del):
+                #         os.remove(to_del)
 
             for client in selected_client:
                 latest_model_iter[client.idx] = t
-                
+
+        models_paths = wandb.Table(dataframe=pd.DataFrame([latest_model_iter]))
+        run.log({"models_paths": models_paths})
+
         train_acc, eval_acc = self.eval_clients(self.client_list)
         run.log({"Train Accuracy": train_acc,
                  "Eval Accuracy": eval_acc})
@@ -249,7 +243,6 @@ class Server_mira(BaseServer):
                     other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
-                    # self.alk_connection[int(client_id)][int(other_client_id)] = self.get_alk()
                     weight = self.alk_connection[int(client_id)][int(other_client_id)]
                     for key in client_state_dict.keys():
                         client_diff[key].data += weight * (client_state_dict[key].data.clone() - other_client_state_dict[key].data.clone())
@@ -257,13 +250,15 @@ class Server_mira(BaseServer):
             for key in client_state_dict:
                 client_state_dict[key].data -=  global_lr * reg_param * client_diff[key].data
 
-            # set_peft_model_state_dict(self.model, client_state_dict, "default")
 
             # save the updated model
             save_dir = os.path.join(self.output_dir, str(epoch + 1), f"local_output_{client_id}")
             os.makedirs(save_dir, exist_ok=True)
             save_path = os.path.join(save_dir, "pytorch_model.bin")
             torch.save(client_state_dict, save_path)
+            set_peft_model_state_dict(self.model, client_state_dict, "default")
+            self.model.save_pretrained(save_dir)
+            self.config.save_pretrained(save_dir)
 
 
     def eval_clients(self, clients_list):
