@@ -77,7 +77,7 @@ class Trainer:
         progress_bar = tqdm(range(len(self.client.train_loader)))
             
         for i, batch in enumerate(self.client.train_loader):
-
+                print(len(batch['input_ids']))
                 batch = {
                     'input_ids': batch['input_ids'].to(self.client.device),
                     'labels': batch['labels'].to(self.client.device),
