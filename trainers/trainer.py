@@ -30,7 +30,8 @@ class Trainer:
             self.client.optimizer.zero_grad()
 
         def closure():
-            
+            input_length = batch['input_ids'].shape[1]
+            print("input_length: ", input_length)
             try:
                 out = self.client.model(**batch)
                 loss = self.client.criterion(out)
@@ -77,7 +78,7 @@ class Trainer:
         progress_bar = tqdm(range(len(self.client.train_loader)))
             
         for i, batch in enumerate(self.client.train_loader):
-                print(len(batch['input_ids']))
+                
                 batch = {
                     'input_ids': batch['input_ids'].to(self.client.device),
                     'labels': batch['labels'].to(self.client.device),
