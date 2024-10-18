@@ -1,14 +1,14 @@
 #!/bin/bash
 #SBATCH --account=project_2009050
-#SBATCH --job-name=mira_mahti_dolly_gemma
+#SBATCH --job-name=mira_plus_mahti_dolly_gemma
 #SBATCH --partition=gpusmall
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=100G
 #SBATCH --time=10:00:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --output=logs/mira/dolly/gemma/out.out
-#SBATCH --error=logs/mira/dolly/gemma/out.err
+#SBATCH --output=logs/mira_plus/dolly/gemma/out.out
+#SBATCH --error=logs/mira_plus/dolly/gemma/out.err
 
 module --force purge
 module load pytorch
