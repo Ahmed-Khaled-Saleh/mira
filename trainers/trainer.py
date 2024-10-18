@@ -80,6 +80,11 @@ class Trainer:
             if v.requires_grad:
                 self.client.embedding[k].data.add_(v) 
 
+    def avg_embed(self, epochs):
+        for k, v in self.client.model.state_dict().items():
+            if v.requires_grad:
+                self.client.embedding[k].data.div_(epochs)
+
 
     def _run_epoch(self):
         total_loss = 0
@@ -202,7 +207,7 @@ class Trainer:
             callbacks[1](memory_record_dic, self.client.device)
 
         if self.client.args.name in ['mira_plus']:
-            self.client.embedding = self.client.embedding / epochs
+            self.avg_embed(epochs)
 
         return train_loss, val_loss
     
