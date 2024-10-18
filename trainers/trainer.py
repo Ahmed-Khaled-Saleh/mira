@@ -187,7 +187,7 @@ class Trainer:
         train_loss = []
         for _ in range(epochs):
             if self.client.args.name in ['mira_plus']:
-                self.client.embedding = self.add_models()
+                self.add_models()
 
             self.client.model = self.client.model.to(self.client.device)
             if fed and self.client.args.name in ['Na']:
