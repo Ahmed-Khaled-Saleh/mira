@@ -241,7 +241,8 @@ class Server_mira_plus(BaseServer):
                         # Compute cosine similarity for the corresponding tensors
                         sim = F.cosine_similarity(param1.view(-1), param2.view(-1), dim=0).item()
                         similarities.append(sim)
-                
+                else:
+                    continue
                 avg_sim = sum(similarities) / len(similarities)
                 self.alk_connection[int(client_id)][int(other_client_id)] = F.softplus(torch.tensor(avg_sim)).item()
         # save memory
