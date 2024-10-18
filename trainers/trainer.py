@@ -181,7 +181,7 @@ class Trainer:
         
         train_loss = []
         for _ in range(epochs):
-            if self.clients.args.name in ['mira_plus']:
+            if self.client.args.name in ['mira_plus']:
                 self.client.embedding = self.add_models(self.client.embedding, self.client.model)
 
             self.client.model = self.client.model.to(self.client.device)
@@ -201,7 +201,7 @@ class Trainer:
         if callbacks:
             callbacks[1](memory_record_dic, self.client.device)
 
-        if self.clients.args.name in ['mira_plus']:
+        if self.client.args.name in ['mira_plus']:
             self.client.embedding = self.client.embedding / epochs
 
         return train_loss, val_loss
