@@ -25,13 +25,16 @@ class Trainer:
         self.client.train_iterator = iter(self.client.train_loader)
         self.client.model.generation_config.pad_token_id = self.client.tokenizer.pad_token_id
         
+        
     def _run_batch(self, batch):
         if not isinstance(self.client.optimizer, MeZOFramework):
             self.client.optimizer.zero_grad()
 
         def closure():
             input_length = batch['input_ids'].shape[1]
-            print("input_length: ", input_length)
+            if input_length  + 128 >= 1024:
+                print("Warning: input length is too long")
+                return torch.tensor(float(0), device=self.client.device)
             try:
                 out = self.client.model(**batch)
                 loss = self.client.criterion(out)
@@ -72,11 +75,17 @@ class Trainer:
         
         return loss
     
+    def add_models(self):
+        for k, v in self.client.model.named_parameters():
+            if v.requires_grad:
+                self.client.embedding[k].data.add_(v) 
+
+
     def _run_epoch(self):
         total_loss = 0
         num_trained = 0
         progress_bar = tqdm(range(len(self.client.train_loader)))
-            
+
         for i, batch in enumerate(self.client.train_loader):
                 
                 batch = {
@@ -172,7 +181,10 @@ class Trainer:
         
         train_loss = []
         for _ in range(epochs):
+            if self.clients.args.name in ['mira_plus']:
+                self.client.embedding = self.add_models(self.client.embedding, self.client.model)
 
+            self.client.model = self.client.model.to(self.client.device)
             if fed and self.client.args.name in ['Na']:
                 avg_train_loss = self._run_epoch_fed(local_iters)
             else:
@@ -188,6 +200,9 @@ class Trainer:
         
         if callbacks:
             callbacks[1](memory_record_dic, self.client.device)
+
+        if self.clients.args.name in ['mira_plus']:
+            self.client.embedding = self.client.embedding / epochs
 
         return train_loss, val_loss
     
@@ -220,6 +235,9 @@ class Trainer:
                     'labels': batch['labels'].to(self.client.device),
                     'attention_mask': batch['attention_mask'].to(self.client.device) 
                 }
+                input_length = batch['input_ids'].shape[1]
+                if input_length  + 128 >= 1024:
+                    continue
                 
 
                 if num_eval == 0:
@@ -248,6 +266,7 @@ class Trainer:
         progress_bar_train = tqdm(range(len(self.client.train_loader_genr)))
         acc_total_train = 0.0
         num_train = 0
+        total_items = len(self.client.train_loader_genr)
 
         with torch.no_grad():
             for batch in self.client.train_loader_genr:
@@ -256,6 +275,11 @@ class Trainer:
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
                 
+                input_length = input_ids.shape[1]
+                if input_length  + 128 >= 1024:
+                    total_items -= 1
+                    continue
+
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
                     attention_mask=attention_mask,
@@ -271,9 +295,9 @@ class Trainer:
                 print(f"Client {self.client.idx}'s Batch Rouge is : {r_score}")
                 progress_bar_train.update(1)
            
-        print(f'Client {self.client.idx} Rouge is : {acc_total_train / len(self.client.train_loader_genr)}')
+        print(f'Client {self.client.idx} Rouge is : {acc_total_train / total_items}')
         print("****************************************")
-        return acc_total_train / len(self.client.train_loader_genr)
+        return acc_total_train / total_items
     
     def eval_generate(self):
         print("****************************************")
@@ -284,6 +308,7 @@ class Trainer:
         
         progress_bar_eval = tqdm(range(len(self.client.eval_loader_genr)))
         acc_total_eval = 0.0
+        total_items = len(self.client.eval_loader_genr)
 
         with torch.no_grad():
             for batch in self.client.eval_loader_genr:
@@ -291,6 +316,12 @@ class Trainer:
                 input_ids = batch['input_ids'].to(self.client.device)
                 label_ids = batch['labels'].to(self.client.device)
                 attention_mask=batch['attention_mask'].to(self.client.device)
+
+                input_length = input_ids.shape[1]
+                if input_length  + 128 >= 1024:
+                    total_items -= 1
+                    continue
+
 
                 output_ids = self.client.model.generate(
                     input_ids=input_ids,
@@ -307,9 +338,9 @@ class Trainer:
                 print(f"Client {self.client.idx}'s Batch Rouge is : {r_score}")
                 progress_bar_eval.update(1)
 
-        print(f'Client {self.client.idx} Rouge is : {acc_total_eval / len(self.client.eval_loader_genr)}')
+        print(f'Client {self.client.idx} Rouge is : {acc_total_eval / total_items}')
         print("****************************************")
-        return acc_total_eval / len(self.client.eval_loader_genr)
+        return acc_total_eval / total_items
     
     def prepare_dataloader(self, dataset, batch_size: int, data_collator):
         return DataLoader(
