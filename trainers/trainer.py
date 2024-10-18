@@ -76,7 +76,7 @@ class Trainer:
         return loss
     
     def add_models(self):
-        for k, v in self.client.model.named_parameters():
+        for k, v in self.client.model.state_dict().items():
             if v.requires_grad:
                 self.client.embedding[k].data.add_(v) 
 
