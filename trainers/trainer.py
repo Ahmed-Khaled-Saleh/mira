@@ -304,6 +304,8 @@ class Trainer:
            
         print(f'Client {self.client.idx} Rouge is : {acc_total_train / total_items}')
         print("****************************************")
+        if total_items == 0:
+            total_items = 1e-10
         return acc_total_train / total_items
     
     def eval_generate(self):
@@ -347,6 +349,9 @@ class Trainer:
 
         print(f'Client {self.client.idx} Rouge is : {acc_total_eval / total_items}')
         print("****************************************")
+        
+        if total_items == 0:
+            total_items = 1e-10
         return acc_total_eval / total_items
     
     def prepare_dataloader(self, dataset, batch_size: int, data_collator):

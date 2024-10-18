@@ -108,7 +108,7 @@ class Server_mira_plus(BaseServer):
         local_dataset_len_dict = dict()
         
         print("Finished initializing the clients")
-        latest_model_iter = dict()
+        self.latest_model_iter = dict()
 
         for t in range(1, args.rounds + 1):
             print("length of client list: ", len(self.client_list))
@@ -122,8 +122,8 @@ class Server_mira_plus(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
-                if client.idx in latest_model_iter:
-                    comm_round = latest_model_iter[client.idx]
+                if client.idx in self.latest_model_iter:
+                    comm_round = self.latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                 else:
@@ -208,9 +208,9 @@ class Server_mira_plus(BaseServer):
             lst_global_metrics_dfs.append(pd.DataFrame(lst_global_metrics))
 
             for client in selected_client:
-                latest_model_iter[client.idx] = t
+                self.latest_model_iter[client.idx] = t
 
-        models_paths = wandb.Table(dataframe=pd.DataFrame([latest_model_iter]))
+        models_paths = wandb.Table(dataframe=pd.DataFrame([self.latest_model_iter]))
         run.log({"models_paths": models_paths})
 
         train_acc, eval_acc = self.eval_clients(self.client_list)
@@ -296,9 +296,20 @@ class Server_mira_plus(BaseServer):
         
         for client in clients_list:
             metrics = {}
-            
+
+            if client.idx in self.latest_model_iter:
+                comm_round = self.latest_model_iter[client.idx]
+                model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
+                                            "pytorch_model.bin")
+                    
             if not client.model:
                 client.model = deepcopy(self.model)
+            
+            client.model = client.model.to(self.device)
+            if os.path.exists(model_path):
+                set_peft_model_state_dict(client.model,
+                                          torch.load(model_path, map_location=self.device),
+                                          "default")
 
             trainer = Trainer(client)
 
