@@ -215,7 +215,6 @@ class Trainer:
         total_loss = 0
         print("****************************************")
         print('Inside the eval () function of client ', self.client.idx)
-
         
         self.client.model = self.client.model.to(self.client.device)
         self.client.model.eval()
@@ -349,7 +348,7 @@ class Trainer:
 
         print(f'Client {self.client.idx} Rouge is : {acc_total_eval / total_items}')
         print("****************************************")
-        
+
         if total_items == 0:
             total_items = 1e-10
         return acc_total_eval / total_items
