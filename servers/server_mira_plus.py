@@ -122,6 +122,15 @@ class Server_mira_plus(BaseServer):
             for client in selected_client:
                 print("Client ", client.idx, " is training")
 
+                #weight exchange
+                # if t % 5 == 0:
+                    # get the highest value of akl for client i
+                    # other_client_idx = self.akl_connection[int(client.idx)].argmax()
+                    # comm_round = self.latest_model_iter[client.idx]
+                    # model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(other_client_idx),
+                    #                         "pytorch_model.bin")
+                    
+                # else:
                 if client.idx in self.latest_model_iter:
                     comm_round = self.latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
@@ -221,7 +230,8 @@ class Server_mira_plus(BaseServer):
     
     
     def cosine_similarity_per_layer(self, selected_clients_set, epoch):
-
+        
+        seen = set()
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), "embedding.bin")
 
@@ -229,7 +239,12 @@ class Server_mira_plus(BaseServer):
 
             for j, other_client_id in enumerate(selected_clients_set):
                 similarities = []
-                if i != j:
+                seen.add((client_id, other_client_id))
+                if client_id != other_client_id:
+
+                    if (other_client_id, client_id) in seen or (client_id, other_client_id) in seen:
+                        continue
+
                     other_client_path = os.path.join(self.output_dir, str(epoch), "embedding.bin")
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)
 
@@ -245,6 +260,8 @@ class Server_mira_plus(BaseServer):
                     continue
                 avg_sim = sum(similarities) / len(similarities)
                 self.alk_connection[int(client_id)][int(other_client_id)] = F.softplus(torch.tensor(avg_sim)).item()
+                self.alk_connection[int(other_client_id)][int(client_id)] = self.alk_connection[int(client_id)][int(other_client_id)]
+       
         # save memory
         del client_state_dict
         del other_client_state_dict
@@ -267,7 +284,8 @@ class Server_mira_plus(BaseServer):
                 client_diff[key] = torch.zeros_like(client_state_dict[key]).to(self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
-                if i != j:
+
+                if client_id != other_client_id:
                     other_client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{other_client_id}", "pytorch_model.bin")
                     other_client_state_dict = torch.load(other_client_path, map_location=self.device)#.state_dict()
 
