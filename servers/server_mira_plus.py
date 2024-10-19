@@ -198,6 +198,7 @@ class Server_mira_plus(BaseServer):
                                                                     t
                                                                    )
             
+            print(f"Connection matrix updated {self.alk_connection}")
 
             print("Collecting the weights of clients and performing aggregation")
             self.aggregate(
@@ -230,7 +231,7 @@ class Server_mira_plus(BaseServer):
     
     
     def cosine_similarity_per_layer(self, selected_clients_set, epoch):
-        
+        other_client_state_dict = {}
         seen = set()
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), "embedding.bin")
