@@ -149,7 +149,7 @@ class Server_mira_plus(BaseServer):
                 
                 client.initiate_local_training(self.output_dir)
                 
-                client.optimizer = AdamW(client.model.parameters(),
+                client.optimizer = Adam(client.model.parameters(),
                                         lr= float(self.args.lr),
                                         weight_decay= float(self.args.weight_decay))
                 
