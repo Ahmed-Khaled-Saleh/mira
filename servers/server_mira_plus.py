@@ -247,6 +247,7 @@ class Server_mira_plus(BaseServer):
                 client_alpha = torch.load(client_path, map_location=self.device)
             else: 
                 print("Creating new alpha for client ", client_id)
+                print(self.args.num_clients)
                 client_alpha = torch.randn(self.args.num_clients, requires_grad=True, device=self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
@@ -282,6 +283,8 @@ class Server_mira_plus(BaseServer):
         del trainer
         del client
         del Alpha
+        import gc
+        gc.collect()
         torch.cuda.empty_cache()
     
     def cosine_similarity_per_layer(self, selected_clients_set, epoch):
