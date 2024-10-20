@@ -136,7 +136,7 @@ class Server_mira_plus(BaseServer):
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
                     
-                    alpha_path = os.path.join(self.output_dir, str(comm_round), "alpha.pt")
+                    alpha_path = os.path.join(self.output_dir, str(comm_round), f"local_output_{client.idx}", "alpha.pt")
                     if os.path.exists(alpha_path):
                         print("Loading alpha for client ", client.idx)
                         client.alpha = torch.load(alpha_path, map_location=self.device)
@@ -239,9 +239,9 @@ class Server_mira_plus(BaseServer):
 
     def get_weights(self, selected_clients_set, epoch):
 
-        Alpha = torch.zeros(len(selected_clients_set), len(selected_clients_set))
+        Alpha = torch.zeros(len(self.args.num_clients), len(self.args.num_clients), device=self.device)
         for i, client_id in enumerate(selected_clients_set):
-            client_path = os.path.join(self.output_dir, str(epoch), "alpha.pt")
+            client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}","alpha.pt")
             
             if os.path.exists(client_path):
                 client_alpha = torch.load(client_path, map_location=self.device)
@@ -256,7 +256,7 @@ class Server_mira_plus(BaseServer):
                     # mixing weight for client i and client j calulated as the softmax
                     w_i = F.softmax(client_alpha, dim=0)
                     self.alk_connection[int(client_id)][int(other_client_id)] = w_i[int(other_client_id)].item()       
-            Alpha[i] = client_alpha
+            Alpha[client_id] = client_alpha
 
         return self.alk_connection, Alpha
 
@@ -278,7 +278,7 @@ class Server_mira_plus(BaseServer):
             client.alpha.data = Alpha[client.idx].data
             client.alpha.requires_grad = True
             trainer.update_alpha()
-            torch.save(client.alpha, os.path.join(self.output_dir, str(epoch), "alpha.pt"))
+            torch.save(client.alpha, os.path.join(self.output_dir, str(epoch), f"local_output_{client.idx}", "alpha.pt"))
 
         del trainer
         del client
