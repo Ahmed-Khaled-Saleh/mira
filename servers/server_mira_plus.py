@@ -239,7 +239,7 @@ class Server_mira_plus(BaseServer):
 
     def get_weights(self, selected_clients_set, epoch):
 
-        Alpha = torch.zeros(len(self.args.num_clients), len(self.args.num_clients), device=self.device)
+        Alpha = torch.zeros((self.args.num_clients, self.args.num_clients), device=self.device)
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), f"local_output_{client_id}","alpha.pt")
             
