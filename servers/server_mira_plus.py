@@ -242,8 +242,12 @@ class Server_mira_plus(BaseServer):
         Alpha = torch.zeros(len(selected_clients_set), len(selected_clients_set))
         for i, client_id in enumerate(selected_clients_set):
             client_path = os.path.join(self.output_dir, str(epoch), "alpha.pt")
-
-            client_alpha = torch.load(client_path, map_location=self.device)
+            
+            if os.path.exists(client_path):
+                client_alpha = torch.load(client_path, map_location=self.device)
+            else: 
+                print("Creating new alpha for client ", client_id)
+                client_alpha = torch.randn(self.args.num_clients, requires_grad=True, device=self.device)
 
             for j, other_client_id in enumerate(selected_clients_set):
 
