@@ -1,5 +1,5 @@
 - name: 'mira_plus'
-  num_clients: 80
+  num_clients: 20
   num_clients_per_task: 10
   m: 0.1
   rounds: 40
