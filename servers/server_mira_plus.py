@@ -125,7 +125,7 @@ class Server_mira_plus(BaseServer):
                 #weight exchange
                 # if t % 5 == 0:
                     # get the highest value of akl for client i
-                    # other_client_idx = self.akl_connection[int(client.idx)].argmax()
+                    # other_client_idx = self.alk_connection[int(client.idx)].argmax()
                     # comm_round = self.latest_model_iter[client.idx]
                     # model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(other_client_idx),
                     #                         "pytorch_model.bin")
@@ -135,6 +135,13 @@ class Server_mira_plus(BaseServer):
                     comm_round = self.latest_model_iter[client.idx]
                     model_path = os.path.join(self.output_dir, str(comm_round), "local_output_{}".format(client.idx),
                                             "pytorch_model.bin")
+                    
+                    alpha_path = os.path.join(self.output_dir, str(comm_round), "alpha.pt")
+                    if os.path.exists(alpha_path):
+                        print("Loading alpha for client ", client.idx)
+                        client.alpha = torch.load(alpha_path, map_location=self.device)
+                        client.alpha.requires_grad = True
+
                 else:
                     model_path = ''
 
@@ -143,6 +150,7 @@ class Server_mira_plus(BaseServer):
 
                 client.model = client.model.to(self.device)
                 if os.path.exists(model_path):
+                    print("Loading PeftModel for client ", client.idx)
                     set_peft_model_state_dict(client.model,
                                               torch.load(model_path, map_location=self.device),
                                               "default")
@@ -177,11 +185,9 @@ class Server_mira_plus(BaseServer):
                 lst_global_metrics.append(metrics)
                 
                 client.model, local_dataset_len_dict, previously_selected_clients_set, last_client_id = \
-                    client.terminate_local_training(t, 
-                                                    local_dataset_len_dict,
-                                                    previously_selected_clients_set)
-                
-                torch.save(client.embedding.state_dict(), os.path.join(self.output_dir, str(t), "embedding.bin"))
+                    client.terminate_local_training(t,local_dataset_len_dict, previously_selected_clients_set)
+
+                # torch.save(client.embedding.state_dict(), os.path.join(self.output_dir, str(t), "embedding.bin"))
                 
                 client.clear_model()
                 del trainer
@@ -192,19 +198,20 @@ class Server_mira_plus(BaseServer):
                 torch.cuda.empty_cache()
 
                 
-            print("Updating the connection matrix")
-            self.alk_connection = self.cosine_similarity_per_layer(
-                                                                    client_indices_rounds[t-1], 
-                                                                    t
-                                                                   )
+            # print("Updating the connection matrix")
+            # self.alk_connection = self.cosine_similarity_per_layer(
+            #                                                         client_indices_rounds[t-1], 
+            #                                                         t
+            #                                                        )
             
-            print(f"Connection matrix updated {self.alk_connection}")
+            # print(f"Connection matrix updated {self.alk_connection}")
 
             print("Collecting the weights of clients and performing aggregation")
-            self.aggregate(
-                            client_indices_rounds[t-1],
-                            t,
-                            )
+            self.alk_connection, Alpha = self.get_weights( client_indices_rounds[t-1], t)
+            
+            self.aggregate(client_indices_rounds[t-1], t)
+
+            self.update_alpha(Alpha, client_indices_rounds[t-1], t)
             
             round_train_loss = np.array([metric['train_loss'] for metric in lst_global_metrics]).mean()
             round_val_loss = np.array([metric['val_loss'] for metric in lst_global_metrics]).mean()
@@ -229,6 +236,49 @@ class Server_mira_plus(BaseServer):
             
         return lst_global_metrics_dfs
     
+
+    def get_weights(self, selected_clients_set, epoch):
+
+        Alpha = torch.zeros(len(selected_clients_set), len(selected_clients_set))
+        for i, client_id in enumerate(selected_clients_set):
+            client_path = os.path.join(self.output_dir, str(epoch), "alpha.pt")
+
+            client_alpha = torch.load(client_path, map_location=self.device)
+
+            for j, other_client_id in enumerate(selected_clients_set):
+
+                if client_id != other_client_id:
+                    # mixing weight for client i and client j calulated as the softmax
+                    w_i = F.softmax(client_alpha, dim=0)
+                    self.alk_connection[int(client_id)][int(other_client_id)] = w_i[int(other_client_id)].item()       
+            Alpha[i] = client_alpha
+
+        return self.alk_connection, Alpha
+
+    def update_alpha(self, Alpha, selected_clients_set, epoch):
+        selected_client = [self.client_list[i] for i in selected_clients_set[epoch - 1]]
+        for client in selected_client:
+            trainer = Trainer(client)
+
+            model_path = os.path.join(self.output_dir, str(epoch), "local_output_{}".format(client.idx), "pytorch_model.bin")
+            with torch.no_grad():
+                client.model = deepcopy(self.model)
+            
+            client.model = client.model.to(self.device)
+            if os.path.exists(model_path):
+                set_peft_model_state_dict(client.model,
+                                          torch.load(model_path, map_location=self.device),
+                                          "default")
+
+            client.alpha.data = Alpha[client.idx].data
+            client.alpha.requires_grad = True
+            trainer.update_alpha()
+            torch.save(client.alpha, os.path.join(self.output_dir, str(epoch), "alpha.pt"))
+
+        del trainer
+        del client
+        del Alpha
+        torch.cuda.empty_cache()
     
     def cosine_similarity_per_layer(self, selected_clients_set, epoch):
         other_client_state_dict = {}

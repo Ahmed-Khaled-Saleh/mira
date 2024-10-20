@@ -13,7 +13,7 @@ from utils.validation import *  # noqa: F403
 from optimizers.mezo_torch import MeZOOptimizer
 from trainers.trainer import Trainer
 from clients.base_client import BaseClient
-
+from torch.optim import Adam
 
 class Client_mira_plus(BaseClient):
     def __init__(self,
@@ -60,6 +60,7 @@ class Client_mira_plus(BaseClient):
         self.task = self.task if isinstance(self.task, str) else self.task[0]
         self.train_stat = {}
         self.test_stats = {}
+        self.alpha = torch.randn(self.args.num_clients, requires_grad=True, device=self.device)
         # self.output_dir = self.args.output_dir
 
 
@@ -81,8 +82,6 @@ class Client_mira_plus(BaseClient):
         self.embedding = deepcopy(self.model)
         for param in self.embedding.parameters():
             param.data.zero_()
-
-
 
 
     def terminate_local_training(self, epoch, local_dataset_len_dict, previously_selected_clients_set):

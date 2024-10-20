@@ -5,6 +5,7 @@ from tqdm import tqdm
 from utils.validation import rouge_score
 from optimizers.mezo_torch import MeZOOptimizer
 from optimizers.mezo_optimizer import MeZOFramework
+from torch.optim import Adam
 class Trainer:
     def __init__(
         self,
@@ -85,6 +86,31 @@ class Trainer:
             if v.requires_grad:
                 self.client.embedding[k].data.div_(epochs)
 
+    def update_alpha(self):
+        optimizer = Adam([self.client.alpha], lr=0.001)
+        
+        for batch in self.client.eval_loader:
+            optimizer.zero_grad()
+
+            batch = {
+                    'input_ids': batch['input_ids'].to(self.client.device),
+                    'labels': batch['labels'].to(self.client.device),
+                    'attention_mask': batch['attention_mask'].to(self.client.device) 
+                }
+            
+            input_length = batch['input_ids'].shape[1]
+            if input_length  + 128 >= 1024:
+                print("Warning: input length is too long")
+                continue
+            try:
+                out = self.client.model(**batch)
+                loss = self.client.criterion(out)
+                loss.backward()
+                optimizer.step()
+            except:
+                print("!ALPHA Error in loss calculation")
+                continue
+            
 
     def _run_epoch(self):
         total_loss = 0
@@ -186,8 +212,8 @@ class Trainer:
         
         train_loss = []
         for _ in range(epochs):
-            if self.client.args.name in ['mira_plus']:
-                self.add_models()
+            # if self.client.args.name in ['mira_plus']:
+            #     self.add_models()
 
             self.client.model = self.client.model.to(self.client.device)
             if fed and self.client.args.name in ['Na']:
@@ -206,8 +232,8 @@ class Trainer:
         if callbacks:
             callbacks[1](memory_record_dic, self.client.device)
 
-        if self.client.args.name in ['mira_plus']:
-            self.avg_embed(epochs)
+        # if self.client.args.name in ['mira_plus']:
+        #     self.avg_embed(epochs)
 
         return train_loss, val_loss
     
