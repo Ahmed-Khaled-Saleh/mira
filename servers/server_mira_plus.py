@@ -207,7 +207,7 @@ class Server_mira_plus(BaseServer):
             # print(f"Connection matrix updated {self.alk_connection}")
 
             print("Collecting the weights of clients and performing aggregation")
-            self.alk_connection, Alpha = self.get_weights( client_indices_rounds[t-1], t)
+            self.alk_connection, Alpha = self.get_weights(client_indices_rounds[t-1], t)
             
             self.aggregate(client_indices_rounds[t-1], t)
 
